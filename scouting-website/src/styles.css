@@ -1,0 +1,65 @@
+html {
+  /* px means "pixels". The base font size is now 10 pixels high */
+  font-size: 10px;
+  /* Replace PLACEHOLDER with the font-family property value you got from Google Fonts */
+  font-family: "Lato", sans-serif;
+}
+
+
+html, body { height: 100%; }
+body {
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 20px;
+  /* Background color for scouting app: #324A6D*/
+  background-color: #324A6D;
+  display: flex;
+  flex-direction: column;
+}
+
+
+p {
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+  margin: 0;
+  margin-bottom: 0px;
+}
+
+
+form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+}
+
+
+h1 {
+  margin: 0;
+  padding: 20px 0;
+  color: #ffffff;
+}
+
+
+
+
+img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+
+.done {
+  color: darkseagreen;
+  text-decoration: line-through solid black 2px;
+}
+
+
+.bi {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+}

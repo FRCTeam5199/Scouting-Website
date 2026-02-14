@@ -1,12 +1,47 @@
-import { NavLink } from "react-router-dom"
+import React, { useState } from 'react';
+import * as FaIcons from 'react-icons/fa';
+import * as AiIcons from 'react-icons/ai';
+import { Link } from 'react-router-dom';
+import { SidebarData } from './SidebarData';
+import './Navbar.css';
+import { IconContext } from 'react-icons';
 
+// Code for menu bar
+function Navbar() {
+  const [sidebar, setSidebar] = useState(false);
 
-export default function Navbar() {
+  const showSidebar = () => setSidebar(!sidebar);
+
   return (
-    <nav style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-      <NavLink to="/">Home</NavLink> |{" "}
-      <NavLink to="/settings">Settings</NavLink> |{" "}
-      <NavLink to="/review">Review</NavLink>
-    </nav>
-  )
+    <>
+      <IconContext.Provider value={{ color: '#fff' }}>
+        <div className='navbar'>
+          <Link to='#' className='menu-bars'>
+            <FaIcons.FaBars onClick={showSidebar} />
+          </Link>
+        </div>
+        <nav className={sidebar ? 'nav-menu active' : 'nav-menu'}>
+          <ul className='nav-menu-items' onClick={showSidebar}>
+            <li className='navbar-toggle'>
+              <Link to='#' className='menu-bars'>
+                <AiIcons.AiOutlineClose />
+              </Link>
+            </li>
+            {SidebarData.map((item, index) => {
+              return (
+                <li key={index} className={item.cName}>
+                  <Link to={item.path}>
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </IconContext.Provider>
+    </>
+  );
 }
+
+export default Navbar;

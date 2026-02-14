@@ -1,7 +1,9 @@
-export function StandScouting() {
+function StandScouting() {
   return (
     <div className="stand-scouting">
       <h1>Welcome to the Stand Scouting Page!</h1>
     </div>
   );
 }
+
+export default StandScouting;
