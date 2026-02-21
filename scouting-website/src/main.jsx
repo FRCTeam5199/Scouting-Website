@@ -11,7 +11,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './styles.css';
 
 
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -19,5 +18,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 )
-
-
