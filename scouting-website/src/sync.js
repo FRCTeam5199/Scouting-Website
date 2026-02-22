@@ -1,34 +1,50 @@
-import { dbPromise } from "./db";
+import { openDB } from "idb";
 
-const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
+const scriptURL = import.meta.env.VITE_SCRIPT_URL;
+
+
+const dbPromise = openDB("scouting-db", 1, {
+  upgrade(db) {
+    if (!db.objectStoreNames.contains("offline-data")) {
+      db.createObjectStore("offline-data", {
+        keyPath: "submissionId",
+      });
+    }
+  },
+});
+
+export async function saveOffline(data) {
+  const db = await dbPromise;
+  await db.put("offline-data", data);
+  console.log("Saved offline:", data);
+}
 
 export async function sendToServer(data) {
-  const response = await fetch(SCRIPT_URL, {
+  const response = await fetch(scriptURL, {
     method: "POST",
     body: new URLSearchParams(data),
   });
 
-  return response.json();
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error("Network error");
+  }
+
+  return result;
 }
 
-export async function saveOffline(data) {
+export async function syncOfflineData() {
   const db = await dbPromise;
-  await db.add("matchQueue", data);
-}
-
-export async function syncSettings() {
-  if (!navigator.onLine) return;
-
-  const db = await dbPromise;
-  const allData = await db.getAll("matchQueue");
+  const allData = await db.getAll("offline-data");
 
   for (const item of allData) {
     try {
       await sendToServer(item);
-      await db.delete("matchQueue", item.localId);
-    } catch (err) {
-      console.log("Still offline or failed");
+      await db.delete("offline-data", item.submissionId);
+      console.log("Synced:", item.submissionId);
+    } catch (error) {
+      console.log("Still offline:", item.submissionId);
     }
   }
 }
-

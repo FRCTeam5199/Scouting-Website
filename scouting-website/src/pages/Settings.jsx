@@ -1,43 +1,73 @@
 import { useState } from "react";
-import { sendData } from "../api/sheets";
 import { saveOffline, sendToServer } from "../sync";
 
-
-
-// Handles form submission and saving data offline if the user is not connected to the internet
-async function handleSubmitData(formData) {
-  if (navigator.onLine) {
-    try {
-      await sendToServer(formData, "match");
-    } catch (error) {
-      await saveOffline(formData, "match");
-    }
-  } else {
-    await saveOffline(formData, "match");
-  }
-}
-
-
-
 function Settings() {
+  const [formData, setFormData] = useState({
+    Name: "",
+    "Team #": "",
+    "Competition Key": "",
+    Alliance: "",
+  });
+
   const [validated, setValidated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
-  // Shows validator when the form is submitted successfully.
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-    if (form.checkValidity() === false) {
-      event.stopPropagation();
-    } else {
-      await sendData(form);
-      setShowAlert(true);
-    }
-
-    setValidated(true);
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
+  const isFieldValid = (value) => value.trim() !== "";
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const allValid =
+      isFieldValid(formData.Name) &&
+      isFieldValid(formData["Team #"]) &&
+      isFieldValid(formData["Competition Key"]) &&
+      isFieldValid(formData.Alliance);
+
+    if (!allValid) {
+      setValidated(true);
+      return;
+    }
+
+    const submission = {
+      ...formData,
+      submissionId: crypto.randomUUID(),
+      sheet_name: "Settings",
+    };
+
+    try {
+      if (navigator.onLine) {
+        await sendToServer(submission);
+      } else {
+        await saveOffline(submission);
+      }
+
+      setShowAlert(true);
+
+      // Reset form
+      setFormData({
+        Name: "",
+        "Team #": "",
+        "Competition Key": "",
+        Alliance: "",
+      });
+
+      setValidated(false);
+
+    } catch (error) {
+      await saveOffline(submission);
+      setShowAlert(true);
+    }
+  };
 
   return (
     <div>
@@ -54,36 +84,42 @@ function Settings() {
         </div>
       )}
 
-      <form
-        className={`row g-3 needs-validation ${
-          validated ? "was-validated" : ""
-        }`}
-        noValidate
-        onSubmit={handleSubmit}
-        id = "settings-form"
-      >
+      <form onSubmit={handleSubmit}>
+
         {/* Name */}
-        <div className="col-md-4">
+        <div className="col-md-6 mb-3">
           <label className="form-label">Name</label>
           <input
             type="text"
-            name = "Name"
-            className="form-control"
-            placeholder="Name"
-            required
+            name="Name"
+            value={formData.Name}
+            onChange={handleChange}
+            className={`form-control ${
+              validated
+                ? isFieldValid(formData.Name)
+                  ? "is-valid"
+                  : "is-invalid"
+                : ""
+            }`}
           />
           <div className="invalid-feedback">Required</div>
         </div>
 
         {/* Team Number */}
-        <div className="col-md-4">
+        <div className="col-md-6 mb-3">
           <label className="form-label">Team Number</label>
           <input
             type="text"
-            name = "Team #"
-            className="form-control"
-            placeholder="Team Number"
-            required
+            name="Team #"
+            value={formData["Team #"]}
+            onChange={handleChange}
+            className={`form-control ${
+              validated
+                ? isFieldValid(formData["Team #"])
+                  ? "is-valid"
+                  : "is-invalid"
+                : ""
+            }`}
           />
           <div className="invalid-feedback">Required</div>
         </div>
@@ -92,20 +128,35 @@ function Settings() {
         <div className="mb-3">
           <label className="form-label">Competition Key</label>
           <textarea
-            className="form-control"
-            name = "Competition Key"
-            placeholder="competition key"
-            required
-          ></textarea>
+            name="Competition Key"
+            value={formData["Competition Key"]}
+            onChange={handleChange}
+            className={`form-control ${
+              validated
+                ? isFieldValid(formData["Competition Key"])
+                  ? "is-valid"
+                  : "is-invalid"
+                : ""
+            }`}
+          />
           <div className="invalid-feedback">Required</div>
         </div>
 
         {/* Alliance */}
-        <div>
-          <p>
-            What alliance are you scouting? (Click none if you are pit scouting)
-          </p>
-          <select className="form-select" name = "Alliance" required>
+        <div className="mb-3">
+          <label className="form-label">Alliance</label>
+          <select
+            name="Alliance"
+            value={formData.Alliance}
+            onChange={handleChange}
+            className={`form-select ${
+              validated
+                ? isFieldValid(formData.Alliance)
+                  ? "is-valid"
+                  : "is-invalid"
+                : ""
+            }`}
+          >
             <option value="">Select an alliance</option>
             <option value="Red Alliance 1">Red Alliance 1</option>
             <option value="Red Alliance 2">Red Alliance 2</option>
@@ -118,12 +169,10 @@ function Settings() {
           <div className="invalid-feedback">Required</div>
         </div>
 
-        {/* Submit */}
-        <div>
-          <button type="submit" name = "submit button" className="btn btn-primary">
-            Save Settings
-          </button>
-        </div>
+        <button type="submit" className="btn btn-primary">
+          Save Settings
+        </button>
+
       </form>
     </div>
   );

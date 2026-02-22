@@ -2,7 +2,7 @@ import { Link, Route, Routes } from "react-router-dom"
 import Navbar from "./components/Navbar"
 
 import { useEffect } from "react";
-import { syncData } from "./sync";
+import { syncOfflineData } from "./sync";
 
 import Home from "./pages/Home"
 import Settings from "./pages/Settings"
@@ -12,6 +12,14 @@ import StandScouting from "./pages/Stand-Scouting"
 
 
 function App() {
+  
+  // Automatically sync data from IndexedDB to the server when back online
+  useEffect(() => {
+    if (navigator.onLine) {
+      syncOfflineData();
+    }
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -27,14 +35,3 @@ function App() {
 }
 
 export default App;
-
-
-// Automatically sync data from IndexedDB to the server when back online
-useEffect(() => {
-  async function attemptSync() {
-    await syncData(sendToServer);
-  }
-
-  window.addEventListener("online", attemptSync);
-  attemptSync();
-}, []);
