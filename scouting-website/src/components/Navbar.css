@@ -22,11 +22,25 @@
   top: 0;
   left: -100%;
   transition: 850ms;
+  z-index: 2000;
 }
 
 .nav-menu.active {
   left: 0;
   transition: 350ms;
+}
+
+/* Overlay shown when sidebar is open to darken background and allow click-to-close */
+.nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1500;
+  opacity: 1;
+  transition: opacity 0.35s ease;
 }
 
 .nav-text {
