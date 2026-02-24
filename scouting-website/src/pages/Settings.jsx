@@ -1,14 +1,8 @@
 import useForm from "../hooks/useForm";
-import { saveOffline, sendToServer } from "../sync";
-import { useState } from "react";
+import { saveOffline, sendToServer, getLastSettings } from "../sync";
+import { useState, useEffect } from "react";
 
-const initialValues = {
-  Name: "",
-  "Team #": "",
-  "Competition Key": "",
-  Alliance: "",
-};
-
+// Show checkmark/error icons on the form
 function validate(values) {
   const errors = {};
 
@@ -21,7 +15,52 @@ function validate(values) {
 }
 
 function Settings() {
+  const [initialValues, setInitialValues] = useState({
+    Name: "",
+    "Team #": "",
+    "Competition Key": "",
+    Alliance: "",
+  });
+  const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Load saved settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedSettings = await getLastSettings();
+        if (savedSettings) {
+          setInitialValues({
+            Name: savedSettings.Name || "",
+            "Team #": savedSettings["Team #"] || "",
+            "Competition Key": savedSettings["Competition Key"] || "",
+            Alliance: savedSettings.Alliance || "",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load saved settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const onSubmit = async (values) => {
     const submission = {
@@ -33,8 +72,10 @@ function Settings() {
     try {
       if (navigator.onLine) {
         await sendToServer(submission);
+        setSuccessMessage("Settings saved and sent to server!");
       } else {
         await saveOffline(submission);
+        setSuccessMessage("Settings saved locally. Will sync when online.");
       }
       setShowSuccess(true);
       // Auto-hide success message after 5 seconds
@@ -61,14 +102,34 @@ function Settings() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4 text-center">Settings</h1>
+      {loading ? (
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h1 className="mb-4 text-center">Settings</h1>
+          
+          {/* Online/Offline Status Indicator */}
+          <div className="row justify-content-center mb-3">
+            <div className="col-lg-8">
+          <div className={`alert ${isOnline ? 'alert-success' : 'alert-warning'} d-flex align-items-center`} role="alert">
+            <i className={`bi ${isOnline ? 'bi-wifi' : 'bi-wifi-off'} me-2`}></i>
+            <small className="mb-0">
+              {isOnline ? 'Online - Data will be sent to server' : 'Offline - Data will be saved locally and synced when online'}
+            </small>
+          </div>
+        </div>
+      </div>
 
       {showSuccess && (
         <div className="row justify-content-center mb-3">
           <div className="col-lg-8">
             <div className="alert alert-success alert-dismissible fade show" role="alert">
               <i className="bi bi-check-circle-fill me-2"></i>
-              Settings saved successfully!
+              {successMessage}
               <button
                 type="button"
                 className="btn-close"
@@ -188,6 +249,7 @@ function Settings() {
               <div className="invalid-feedback">{errors.Alliance}</div>
             </div>
 
+            {/* Submit button */}
             <div className="d-grid">
               <button
                 type="submit"
@@ -207,6 +269,8 @@ function Settings() {
           </form>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
