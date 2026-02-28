@@ -1,4 +1,5 @@
 import useForm from "../hooks/useForm";
+import useNetworkStatus from "../hooks/useNetworkStatus";
 import { saveOffline, sendToServer, getLastSettings } from "../sync";
 import { useState, useEffect } from "react";
 
@@ -23,7 +24,7 @@ function Settings() {
   });
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isOnline = useNetworkStatus();
   const [successMessage, setSuccessMessage] = useState("");
 
   // Load saved settings on mount
@@ -48,19 +49,7 @@ function Settings() {
     loadSettings();
   }, []);
 
-  // Track online/offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // network status handled by `useNetworkStatus`
 
   const onSubmit = async (values) => {
     const submission = {
@@ -70,7 +59,7 @@ function Settings() {
     };
 
     try {
-      if (navigator.onLine) {
+      if (isOnline) {
         await sendToServer(submission);
         setSuccessMessage("Settings saved and sent to server!");
       } else {

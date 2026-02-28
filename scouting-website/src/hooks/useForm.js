@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 
 
 export default function useForm({
-  initialValues,
-  validate,
-  onSubmit,
+  initialValues = {},
+  validate = () => ({}),
+  onSubmit = async () => {},
 }) {
 
     // Keep track of what is typed in the form
@@ -94,9 +94,29 @@ export default function useForm({
     setTouched({});
   };
 
+  // Keep formData in sync when initialValues change externally
+  const initialRef = useRef(initialValues);
+  useEffect(() => {
+    const prev = initialRef.current;
+    // shallow compare via JSON stringify (sufficient for plain objects used in forms)
+    try {
+      if (JSON.stringify(prev) !== JSON.stringify(initialValues)) {
+        setFormData(initialValues);
+        setErrors({});
+        setTouched({});
+        initialRef.current = initialValues;
+      }
+    } catch (e) {
+      // fallback: always sync if stringify fails
+      setFormData(initialValues);
+      initialRef.current = initialValues;
+    }
+  }, [initialValues]);
+
 
 
   // Autofill detection
+  // Try to pick up browser autofill or external changes to inputs
   useEffect(() => {
     const timeout = setTimeout(() => {
       const inputs = document.querySelectorAll(
@@ -116,7 +136,7 @@ export default function useForm({
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [/* intentionally not depending on formData to avoid tight loop */]);
 
   
   return {

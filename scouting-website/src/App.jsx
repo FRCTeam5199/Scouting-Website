@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar"
 
 import { useEffect } from "react";
 import { syncOfflineData } from "./sync";
+import useNetworkStatus from "./hooks/useNetworkStatus";
 
 import Home from "./pages/Home"
 import Settings from "./pages/Settings"
@@ -36,39 +37,22 @@ function App() {
   }, []);
 
   // Automatically sync data from IndexedDB to the server when back online
+  const isOnline = useNetworkStatus();
+
   useEffect(() => {
     const syncData = async () => {
-      if (navigator.onLine) {
-        try {
-          await syncOfflineData();
-        } catch (error) {
-          console.log("Sync failed:", error);
-        }
+      try {
+        await syncOfflineData();
+      } catch (error) {
+        console.log("Sync failed:", error);
       }
     };
 
-    // Sync on app load
-    syncData();
-
-    // Set up online/offline event listeners for automatic syncing
-    const handleOnline = () => {
-      console.log("Back online - syncing data...");
+    if (isOnline) {
+      console.log("Online - attempting to sync offline data");
       syncData();
-    };
-
-    const handleOffline = () => {
-      console.log("Gone offline - data will be saved locally");
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Cleanup event listeners
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    }
+  }, [isOnline]);
 
   return (
     <>
