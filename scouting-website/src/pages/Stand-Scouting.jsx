@@ -4,7 +4,6 @@ import useNetworkStatus from "../hooks/useNetworkStatus";
 import { saveOffline, sendToServer } from "../sync";
 import "../styles/StandScouting.css";
 
-// Page-level validation for Stand Scouting form
 function validate(values) {
   const errors = {};
   if (!values.scouter_name?.toString().trim()) errors.scouter_name = "Required";
@@ -16,18 +15,19 @@ function validate(values) {
 }
 
 function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
-  // Determine which field image to display based on driver station
   const isBlueAlliance = formData.driver_station?.startsWith("Blue");
   const fieldImage = isBlueAlliance
-    ? "/images/blueAllianceField-2026.png"
-    : "/images/redAllianceField-2026.png";
+    ? "/icons/blueAllianceField-2026.png"
+    : "/icons/redAllianceField-2026.png";
 
-  // Handle starting location button click
-  const handleStartingLocationClick = (location) => {
+  const [rotated, setRotated] = useState(false);
+
+  const handleStartingLocationClick = (index) => {
+    const value = String(index + 1);
     const changeEvent = {
       target: {
         name: "starting_location",
-        value: location,
+        value,
         type: "text",
       },
     };
@@ -36,10 +36,8 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
 
   return (
     <div className="pre-game-tab">
-      {/* Form Fields Section */}
       <div className="form-section mb-4">
         <div className="row">
-          {/* Scouter Name */}
           <div className="col-md-6 mb-3">
             <label htmlFor="scouter_name" className="form-label">
               Scouter Name <span className="text-danger">*</span>
@@ -52,18 +50,13 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`form-control ${
-                touched.scouter_name
-                  ? errors.scouter_name
-                    ? "is-invalid"
-                    : "is-valid"
-                  : ""
+                touched.scouter_name ? (errors.scouter_name ? "is-invalid" : "is-valid") : ""
               }`}
               placeholder="Enter your name"
             />
             <div className="invalid-feedback">{errors.scouter_name}</div>
           </div>
 
-          {/* Driver Station */}
           <div className="col-md-6 mb-3">
             <label htmlFor="driver_station" className="form-label">
               Driver Station <span className="text-danger">*</span>
@@ -75,11 +68,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`form-select ${
-                touched.driver_station
-                  ? errors.driver_station
-                    ? "is-invalid"
-                    : "is-valid"
-                  : ""
+                touched.driver_station ? (errors.driver_station ? "is-invalid" : "is-valid") : ""
               }`}
             >
               <option value="">Select a driver station</option>
@@ -95,7 +84,6 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
         </div>
 
         <div className="row">
-          {/* Team Number */}
           <div className="col-md-6 mb-3">
             <label htmlFor="team_number" className="form-label">
               Team # <span className="text-danger">*</span>
@@ -108,18 +96,13 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`form-control ${
-                touched.team_number
-                  ? errors.team_number
-                    ? "is-invalid"
-                    : "is-valid"
-                  : ""
+                touched.team_number ? (errors.team_number ? "is-invalid" : "is-valid") : ""
               }`}
               placeholder="Enter team number"
             />
             <div className="invalid-feedback">{errors.team_number}</div>
           </div>
 
-          {/* Match Number */}
           <div className="col-md-6 mb-3">
             <label htmlFor="match_number" className="form-label">
               Match # <span className="text-danger">*</span>
@@ -132,11 +115,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               onChange={handleChange}
               onBlur={handleBlur}
               className={`form-control ${
-                touched.match_number
-                  ? errors.match_number
-                    ? "is-invalid"
-                    : "is-valid"
-                  : ""
+                touched.match_number ? (errors.match_number ? "is-invalid" : "is-valid") : ""
               }`}
               placeholder="Enter match number"
             />
@@ -145,43 +124,49 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
         </div>
       </div>
 
-      {/* Field Image with Overlay Buttons Section */}
-      <div className="field-section">
-        <label className="form-label d-block mb-3">
+      <div className="field-section text-center">
+        <label className="form-label d-block mb-2">
           Starting Location <span className="text-danger">*</span>
         </label>
 
-        <div className="field-image-container">
+        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
 
-          {/* Overlay starting location buttons */}
           <div className="starting-location-overlay">
-            {/* Left side button */}
-            <button
-              type="button"
-              className={`starting-location-btn ${
-                formData.starting_location === "Left" ? "active" : ""
-              }`}
-              style={{ left: "15%", top: "40%" }}
-              onClick={() => handleStartingLocationClick("Left")}
-              title="Left starting location"
-            >
-              L
-            </button>
-
-            {/* Right side button */}
-            <button
-              type="button"
-              className={`starting-location-btn ${
-                formData.starting_location === "Right" ? "active" : ""
-              }`}
-              style={{ right: "15%", top: "40%" }}
-              onClick={() => handleStartingLocationClick("Right")}
-              title="Right starting location"
-            >
-              R
-            </button>
+            {(() => {
+              const baseLeft = 55;
+              const baseTops = [12, 30, 48, 66, 84];
+              return baseTops.map((top, i) => {
+                const isMirrored = isBlueAlliance;
+                let left = baseLeft;
+                let computedTop = top;
+                if (isMirrored) {
+                  left = 100 - left;
+                  computedTop = 100 - computedTop;
+                }
+                const style = { left: `${left}%`, top: `${computedTop}%` };
+                const value = String(i + 1);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`starting-location-btn ${formData.starting_location === value ? "active" : ""}`}
+                    style={style}
+                    onClick={() => handleStartingLocationClick(i)}
+                    title={`Starting location ${value}`}
+                  >
+                    {value}
+                  </button>
+                );
+              });
+            })()}
           </div>
+        </div>
+
+        <div className="mt-2 d-flex justify-content-center">
+          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
+            Switch Sides
+          </button>
         </div>
 
         {errors.starting_location && touched.starting_location && (
@@ -192,7 +177,49 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
   );
 }
 
-function StandScouting() {
+function AutonTab() {
+  return <div className="p-3">Auton fields go here.</div>;
+}
+
+function TeleopTab() {
+  return <div className="p-3">Teleop fields go here.</div>;
+}
+
+function EndgameTab() {
+  return <div className="p-3">Endgame fields go here.</div>;
+}
+
+function ExtraTab() {
+  return <div className="p-3">Extra activities or notes.</div>;
+}
+
+function CommentsTab({ formData, handleChange, handleBlur, isSubmitting }) {
+  return (
+    <div className="p-3">
+      <div className="mb-3">
+        <label htmlFor="comments" className="form-label">
+          Comments
+        </label>
+        <textarea id="comments" name="comments" value={formData.comments} onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3}></textarea>
+      </div>
+
+      <div className="d-grid mt-4">
+        <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg">
+          {isSubmitting ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Saving...
+            </>
+          ) : (
+            "Submit Scouting Data"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function StandScouting() {
   const isOnline = useNetworkStatus();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -203,13 +230,14 @@ function StandScouting() {
     team_number: "",
     match_number: "",
     starting_location: "",
+    comments: "",
   };
 
   const onSubmit = async (values) => {
     const submission = {
       ...values,
       submissionId: crypto.randomUUID(),
-      sheet_name: "StandScouting",
+      sheet_name: "Stand Scouting",
     };
 
     if (isOnline) {
@@ -224,82 +252,67 @@ function StandScouting() {
     setTimeout(() => setShowSuccess(false), 4000);
   };
 
-  const {
-    formData,
-    errors,
-    touched,
-    isSubmitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    resetForm,
-  } = useForm({ initialValues, validate, onSubmit });
+  const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit } = useForm({ initialValues, validate, onSubmit });
 
   return (
     <div className="container mt-4">
       <h1 className="mb-4 text-center">Stand Scouting</h1>
 
-      {/* Online/Offline Status */}
       <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center mb-4`} role="alert">
         <i className={`bi ${isOnline ? "bi-wifi" : "bi-wifi-off"} me-2`}></i>
-        <small className="mb-0">
-          {isOnline ? "Online - submissions go to server" : "Offline - submissions stored locally"}
-        </small>
+        <small className="mb-0">{isOnline ? "Online - submissions go to server" : "Offline - submissions stored locally"}</small>
       </div>
 
-      {/* Success Alert */}
       {showSuccess && (
         <div className="alert alert-success alert-dismissible fade show" role="alert">
           <i className="bi bi-check-circle-fill me-2"></i>
           {successMessage}
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => setShowSuccess(false)}
-            aria-label="Close"
-          ></button>
+          <button type="button" className="btn-close" onClick={() => setShowSuccess(false)} aria-label="Close"></button>
         </div>
       )}
 
-      {/* Form and Tabs Container */}
-      <div className="card shadow-sm">
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            {/* Pre-Game Tab (only tab for now) */}
-            <PreGameTab
-              formData={formData}
-              errors={errors}
-              touched={touched}
-              handleChange={handleChange}
-              handleBlur={handleBlur}
-            />
-
-            {/* Submit Button */}
-            <div className="d-grid mt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="btn btn-primary btn-lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span
-                      className="spinner-border spinner-border-sm me-2"
-                      role="status"
-                      aria-hidden="true"
-                    ></span>
-                    Saving...
-                  </>
-                ) : (
-                  "Submit Pre-Game"
-                )}
-              </button>
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <form onSubmit={handleSubmit}>
+                <ul className="nav nav-tabs" id="scoutingTab" role="tablist">
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link active" id="pre-game-tab" data-bs-toggle="tab" data-bs-target="#pre-game-pane" type="button" role="tab" aria-controls="pre-game-pane" aria-selected="true">Pre-Game</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link" id="auton-tab" data-bs-toggle="tab" data-bs-target="#auton-pane" type="button" role="tab" aria-controls="auton-pane" aria-selected="false">Auton</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link" id="teleop-tab" data-bs-toggle="tab" data-bs-target="#teleop-pane" type="button" role="tab" aria-controls="teleop-pane" aria-selected="false">Teleop</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link" id="endgame-tab" data-bs-toggle="tab" data-bs-target="#endgame-pane" type="button" role="tab" aria-controls="endgame-pane" aria-selected="false">Endgame</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link" id="extra-tab" data-bs-toggle="tab" data-bs-target="#extra-pane" type="button" role="tab" aria-controls="extra-pane" aria-selected="false">Extra</button>
+                  </li>
+                  <li className="nav-item" role="presentation">
+                    <button className="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-pane" type="button" role="tab" aria-controls="comments-pane" aria-selected="false">Comments</button>
+                  </li>
+                </ul>
+                <div className="tab-content" id="scoutingTabContent">
+                  <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} />
+                  </div>
+                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab /></div>
+                  <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab /></div>
+                  <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab /></div>
+                  <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab /></div>
+                  <div className="tab-pane fade" id="comments-pane" role="tabpanel" aria-labelledby="comments-tab" tabIndex="0">
+                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} />
+                  </div>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default StandScouting;

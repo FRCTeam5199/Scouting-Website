@@ -3,10 +3,10 @@
 }
 
 .form-section {
-  background-color: #f8f9fa;
+  background-color: #5e9bf7;
   padding: 1.5rem;
   border-radius: 0.25rem;
-  border-left: 4px solid #0d6efd;
+  border-left: 4px solid #5e9bf7;
 }
 
 .field-section {
@@ -17,13 +17,29 @@
   position: relative;
   display: inline-block;
   width: 100%;
-  max-width: 800px;
+  max-width: 640px;
   margin: 0 auto;
   border: 2px solid #dee2e6;
   border-radius: 0.5rem;
   overflow: hidden;
   background-color: #f8f9fa;
 }
+
+.field-image-container.rotated {
+  transform: rotate(180deg);
+  transform-origin: center center;
+  transition: transform 240ms ease;
+}
+
+/* tighten overall form column to match Settings style */
+.card-body form .row.justify-content-center,
+.row.justify-content-center > .col-lg-8 {
+  margin: 0 auto;
+}
+
+/* ensure overlay buttons are visible above rotated image */
+.field-image-container .starting-location-overlay { z-index: 20; }
+.field-image { display:block; width:100%; height:auto; }
 
 .field-image {
   display: block;
@@ -106,3 +122,4 @@
     padding: 0.75rem;
   }
 }
+
