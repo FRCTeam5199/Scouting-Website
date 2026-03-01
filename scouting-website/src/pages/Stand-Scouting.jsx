@@ -4,34 +4,27 @@ import useNetworkStatus from "../hooks/useNetworkStatus";
 import { saveOffline, sendToServer } from "../sync";
 import "../styles/StandScouting.css";
 
+// Validation function
 function validate(values) {
   const errors = {};
   if (!values.scouter_name?.toString().trim()) errors.scouter_name = "Required";
+  if (!values.scouter_team?.toString().trim()) errors.scouter_team = "Required";
+  if (!values.scouted_team?.toString().trim()) errors.scouted_team = "Required";
   if (!values.driver_station?.toString().trim()) errors.driver_station = "Required";
-  if (!values.team_number?.toString().trim()) errors.team_number = "Required";
   if (!values.match_number?.toString().trim()) errors.match_number = "Required";
   if (!values.starting_location?.toString().trim()) errors.starting_location = "Required";
   return errors;
 }
 
-function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
+function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
   const isBlueAlliance = formData.driver_station?.startsWith("Blue");
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
     : "/icons/redAllianceField-2026.png";
 
-  const [rotated, setRotated] = useState(false);
-
   const handleStartingLocationClick = (index) => {
     const value = String(index + 1);
-    const changeEvent = {
-      target: {
-        name: "starting_location",
-        value,
-        type: "text",
-      },
-    };
-    handleChange(changeEvent);
+    handleChange({ target: { name: "starting_location", value, type: "text" } });
   };
 
   return (
@@ -40,7 +33,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
         <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="scouter_name" className="form-label">
-              Scouter Name <span className="text-danger">*</span>
+              Scouter's Name <span className="text-danger">*</span>
             </label>
             <input
               id="scouter_name"
@@ -49,12 +42,46 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               value={formData.scouter_name}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`form-control ${
-                touched.scouter_name ? (errors.scouter_name ? "is-invalid" : "is-valid") : ""
-              }`}
+              className={`form-control ${touched.scouter_name && errors.scouter_name ? "is-invalid" : ""}`}
               placeholder="Enter your name"
             />
             <div className="invalid-feedback">{errors.scouter_name}</div>
+          </div>
+
+          <div className="col-md-6 mb-3">
+            <label htmlFor="scouter_team" className="form-label">
+              Scouter's Team # <span className="text-danger">*</span>
+            </label>
+            <input
+              id="scouter_team"
+              type="text"
+              name="scouter_team"
+              value={formData.scouter_team}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`form-control ${touched.scouter_team && errors.scouter_team ? "is-invalid" : ""}`}
+              placeholder="Enter your team number"
+            />
+            <div className="invalid-feedback">{errors.scouter_team}</div>
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="col-md-6 mb-3">
+            <label htmlFor="scouted_team" className="form-label">
+              Scouted Team <span className="text-danger">*</span>
+            </label>
+            <input
+              id="scouted_team"
+              type="text"
+              name="scouted_team"
+              value={formData.scouted_team}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={`form-control ${touched.scouted_team && errors.scouted_team ? "is-invalid" : ""}`}
+              placeholder="Enter scouted team number"
+            />
+            <div className="invalid-feedback">{errors.scouted_team}</div>
           </div>
 
           <div className="col-md-6 mb-3">
@@ -67,9 +94,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               value={formData.driver_station}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`form-select ${
-                touched.driver_station ? (errors.driver_station ? "is-invalid" : "is-valid") : ""
-              }`}
+              className={`form-select ${touched.driver_station && errors.driver_station ? "is-invalid" : ""}`}
             >
               <option value="">Select a driver station</option>
               <option value="Red Alliance 1">Red Alliance 1</option>
@@ -85,25 +110,6 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
 
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label htmlFor="team_number" className="form-label">
-              Team # <span className="text-danger">*</span>
-            </label>
-            <input
-              id="team_number"
-              type="text"
-              name="team_number"
-              value={formData.team_number}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`form-control ${
-                touched.team_number ? (errors.team_number ? "is-invalid" : "is-valid") : ""
-              }`}
-              placeholder="Enter team number"
-            />
-            <div className="invalid-feedback">{errors.team_number}</div>
-          </div>
-
-          <div className="col-md-6 mb-3">
             <label htmlFor="match_number" className="form-label">
               Match # <span className="text-danger">*</span>
             </label>
@@ -114,9 +120,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
               value={formData.match_number}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`form-control ${
-                touched.match_number ? (errors.match_number ? "is-invalid" : "is-valid") : ""
-              }`}
+              className={`form-control ${touched.match_number && errors.match_number ? "is-invalid" : ""}`}
               placeholder="Enter match number"
             />
             <div className="invalid-feedback">{errors.match_number}</div>
@@ -125,9 +129,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
       </div>
 
       <div className="field-section text-center">
-        <label className="form-label d-block mb-2">
-          Starting Location <span className="text-danger">*</span>
-        </label>
+        <label className="form-label d-block mb-2 title-with-image">Starting Location <span className="text-danger">*</span></label>
 
         <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
@@ -145,18 +147,16 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
                   computedTop = 100 - computedTop;
                 }
                 const style = { left: `${left}%`, top: `${computedTop}%` };
-                const value = String(i + 1);
                 return (
                   <button
                     key={i}
                     type="button"
-                    className={`starting-location-btn ${formData.starting_location === value ? "active" : ""}`}
+                    className={`starting-location-btn ${formData.starting_location === String(i + 1) ? "active" : ""}`}
                     style={style}
                     onClick={() => handleStartingLocationClick(i)}
-                    title={`Starting location ${value}`}
-                  >
-                    {value}
-                  </button>
+                    title={`Starting location ${i + 1}`}
+                    aria-label={`Starting location ${i + 1}`}
+                  />
                 );
               });
             })()}
@@ -164,7 +164,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
         </div>
 
         <div className="mt-2 d-flex justify-content-center">
-          <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
             Switch Sides
           </button>
         </div>
@@ -219,19 +219,22 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting }) {
   );
 }
 
-export default function StandScouting() {
+export default function StandScoutingFixed() {
   const isOnline = useNetworkStatus();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showValidationAlert, setShowValidationAlert] = useState(false);
+  const [rotated, setRotated] = useState(false);
 
-  const initialValues = {
+  const [initialValues, setInitialValues] = useState({
     scouter_name: "",
+    scouter_team: "",
+    scouted_team: "",
     driver_station: "",
-    team_number: "",
     match_number: "",
     starting_location: "",
     comments: "",
-  };
+  });
 
   const onSubmit = async (values) => {
     const submission = {
@@ -252,10 +255,60 @@ export default function StandScouting() {
     setTimeout(() => setShowSuccess(false), 4000);
   };
 
-  const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit } = useForm({ initialValues, validate, onSubmit });
+  const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit, resetForm } = useForm({
+    initialValues,
+    validate,
+    onSubmit,
+  });
+
+  // wrapper submit that checks validation synchronously via validate(formData)
+  const onFormSubmit = async (e) => {
+    e.preventDefault();
+    await handleSubmit(e);
+
+    const validationErrors = validate(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setShowValidationAlert(true);
+      return;
+    }
+
+    setShowValidationAlert(false);
+
+    // Preserve scouter fields and driver station, increment match if numeric
+    const preservedName = formData.scouter_name || initialValues.scouter_name;
+    const preservedScouterTeam = formData.scouter_team || initialValues.scouter_team;
+    const preservedDriverStation = formData.driver_station || initialValues.driver_station;
+
+    let nextMatch = "";
+    const rawMatch = String(formData.match_number || initialValues.match_number || "").trim();
+    if (rawMatch !== "" && !Number.isNaN(Number(rawMatch))) {
+      nextMatch = String(Number(rawMatch) + 1);
+    } else {
+      nextMatch = rawMatch;
+    }
+
+    const newInitial = {
+      scouter_name: preservedName,
+      scouter_team: preservedScouterTeam,
+      scouted_team: "",
+      driver_station: preservedDriverStation,
+      match_number: nextMatch,
+      starting_location: "",
+      comments: "",
+    };
+
+    setInitialValues(newInitial);
+  };
 
   return (
     <div className="container mt-4">
+      {/* inline CSS to force nowrap tabs and ensure immediate rotation */}
+      <style>{`
+        .nav-tabs{display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; -webkit-overflow-scrolling:touch}
+        .nav-tabs .nav-link{white-space:nowrap}
+        .field-image-container.rotated{transform:rotate(180deg)}
+      `}</style>
+
       <h1 className="mb-4 text-center">Stand Scouting</h1>
 
       <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center mb-4`} role="alert">
@@ -275,7 +328,7 @@ export default function StandScouting() {
         <div className="col-lg-8">
           <div className="card shadow-sm">
             <div className="card-body">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={onFormSubmit}>
                 <ul className="nav nav-tabs" id="scoutingTab" role="tablist">
                   <li className="nav-item" role="presentation">
                     <button className="nav-link active" id="pre-game-tab" data-bs-toggle="tab" data-bs-target="#pre-game-pane" type="button" role="tab" aria-controls="pre-game-pane" aria-selected="true">Pre-Game</button>
@@ -296,9 +349,19 @@ export default function StandScouting() {
                     <button className="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-pane" type="button" role="tab" aria-controls="comments-pane" aria-selected="false">Comments</button>
                   </li>
                 </ul>
+
+                {showValidationAlert && (
+                  <div className="mt-3">
+                    <div className="alert alert-danger d-flex align-items-center" role="alert">
+                      <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+                      <div>Not all required information has been filled out yet!</div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="tab-content" id="scoutingTabContent">
                   <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
-                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} />
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
                   </div>
                   <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab /></div>

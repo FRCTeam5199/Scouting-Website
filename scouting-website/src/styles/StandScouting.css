@@ -1,23 +1,33 @@
 .pre-game-tab {
   width: 100%;
-}
-
-.form-section {
+  /* make the pre-game area visually part of the form with blue accent */
   background-color: #5e9bf7;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 0.25rem;
   border-left: 4px solid #5e9bf7;
 }
 
+/* keep the single form card narrow and centered like Settings */
+.card-body {
+  padding: 1rem;
+}
+
+/* form section (inputs) */
+.form-section {
+  background-color: transparent; /* pre-game-tab already provides background */
+  padding: 0.5rem 0;
+}
+
+/* Field image container tightened for readability */
 .field-section {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .field-image-container {
   position: relative;
   display: inline-block;
   width: 100%;
-  max-width: 640px;
+  max-width: 520px; /* slightly smaller for readability */
   margin: 0 auto;
   border: 2px solid #dee2e6;
   border-radius: 0.5rem;
@@ -25,22 +35,13 @@
   background-color: #f8f9fa;
 }
 
+/* immediate rotation (no transition) */
 .field-image-container.rotated {
   transform: rotate(180deg);
   transform-origin: center center;
-  transition: transform 240ms ease;
 }
 
-/* tighten overall form column to match Settings style */
-.card-body form .row.justify-content-center,
-.row.justify-content-center > .col-lg-8 {
-  margin: 0 auto;
-}
-
-/* ensure overlay buttons are visible above rotated image */
-.field-image-container .starting-location-overlay { z-index: 20; }
-.field-image { display:block; width:100%; height:auto; }
-
+/* image fills container */
 .field-image {
   display: block;
   width: 100%;
@@ -48,32 +49,35 @@
   background-color: #e9ecef;
 }
 
+/* overlay for starting location buttons */
 .starting-location-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none; /* container doesn't block clicks; buttons will re-enable pointer events */
 }
 
+/* circular buttons positioned absolutely (numbers removed) */
 .starting-location-btn {
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 2px solid #0d6efd;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.9);
   color: #0d6efd;
   font-weight: bold;
-  font-size: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
   transform: translate(-50%, -50%);
-  z-index: 10;
+  z-index: 20;
+  pointer-events: auto;
 }
 
+/* hover and active visuals */
 .starting-location-btn:hover {
-  background-color: rgba(13, 110, 253, 0.1);
+  background-color: rgba(13, 110, 253, 0.08);
   border-color: #0056b3;
   color: #0056b3;
 }
@@ -89,37 +93,45 @@
   box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.5);
 }
 
-.starting-location-btn:active {
-  transform: translate(-50%, -50%) scale(0.95);
+/* ensure nav tabs stay in single row on small screens */
+.nav-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Responsive adjustments */
+.nav-tabs .nav-link {
+  white-space: nowrap;
+}
+
+/* title that sits above the image and visually part of the form */
+.title-with-image {
+  display: inline-block;
+  background: transparent;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* responsive adjustments */
 @media (max-width: 768px) {
-  .field-section {
-    margin-top: 1.5rem;
+  .field-image-container {
+    max-width: 420px;
   }
 
   .starting-location-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
-  }
-
-  .form-section {
-    padding: 1rem;
+    width: 38px;
+    height: 38px;
   }
 }
 
 @media (max-width: 576px) {
+  .field-image-container {
+    max-width: 340px;
+  }
+
   .starting-location-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
+    width: 34px;
+    height: 34px;
     border-width: 1px;
   }
-
-  .form-section {
-    padding: 0.75rem;
-  }
 }
-
