@@ -177,8 +177,223 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
   );
 }
 
-function AutonTab() {
-  return <div className="p-3">Auton fields go here.</div>;
+function AutonTab({ formData, handleChange, rotated, setRotated }) {
+  const isBlueAlliance = formData.driver_station?.startsWith("Blue");
+  const fieldImage = isBlueAlliance
+    ? "/icons/blueAllianceField-2026.png"
+    : "/icons/redAllianceField-2026.png";
+
+  const hasAuton = formData.has_robot_auton === "Yes";
+
+  // Base checkmark positions (relative coordinates). Order maps to labels below.
+  const baseCheckmarkPositions = [
+    { x: 71, y: 20 }, // Shuttle-Right (top middle-right)
+    { x: 71, y: 80 }, // Shuttle-Left (bottom middle-right)
+    { x: 32, y: 53 }, // Tower (center)
+    { x: 28, y: 29 }, // Depot (left)
+    { x: 20, y: 87 }, // Chute (right)
+  ];
+
+  // Mirror positions for blue alliance to keep arrangement consistent
+  const checkmarkPositions = baseCheckmarkPositions.map((p) => {
+    if (isBlueAlliance) {
+      return { x: 100 - p.x, y: 100 - p.y };
+    }
+    return p;
+  });
+
+  const handleCheckmarkToggle = (index) => {
+    const selected = formData.autonomous_paths_selected || [];
+    const newSelected = selected.includes(index)
+      ? selected.filter((i) => i !== index)
+      : [...selected, index];
+    handleChange({
+      target: { name: "autonomous_paths_selected", value: newSelected, type: "text" },
+    });
+  };
+
+  const handleClimbChange = (e) => handleChange(e);
+  const handleAccuracyChange = (e) => handleChange(e);
+
+  return (
+    <div className="auton-tab">
+      <div className="form-section mb-4">
+        {/* Does the robot have an Auton? */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <label className="form-label mb-2">Does the robot have an Auton?</label>
+            <div className="btn-group w-100" role="group" aria-label="Auton yes/no">
+              <input
+                type="radio"
+                className="btn-check"
+                name="has_robot_auton"
+                id="auton_no"
+                value="No"
+                checked={formData.has_robot_auton === "No"}
+                onChange={handleChange}
+                autoComplete="off"
+              />
+              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_no">
+                No
+              </label>
+
+              <input
+                type="radio"
+                className="btn-check"
+                name="has_robot_auton"
+                id="auton_yes"
+                value="Yes"
+                checked={formData.has_robot_auton === "Yes"}
+                onChange={handleChange}
+                autoComplete="off"
+              />
+              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_yes">
+                Yes
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Collapse section for auton checkboxes */}
+        {hasAuton && (
+          <div className="row mb-4">
+            <div className="col-12">
+              <div className="auton-checkboxes">
+                <div className="form-check mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="auton_has_auton"
+                    id="auton_has_auton"
+                    checked={formData.auton_has_auton || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_has_auton">
+                    Has Auton
+                  </label>
+                </div>
+
+                <div className="form-check mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="auton_shuttled"
+                    id="auton_shuttled"
+                    checked={formData.auton_shuttled || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_shuttled">
+                    Shuttled during Auton
+                  </label>
+                </div>
+
+                <div className="form-check mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="auton_shoot_preloaded"
+                    id="auton_shoot_preloaded"
+                    checked={formData.auton_shoot_preloaded || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_shoot_preloaded">
+                    Can shoot preloaded Fuel
+                  </label>
+                </div>
+
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="auton_shoot_other_fuel"
+                    id="auton_shoot_other_fuel"
+                    checked={formData.auton_shoot_other_fuel || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_shoot_other_fuel">
+                    Can shoot Fuel other than preloaded Fuel
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Climb dropdown */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <label htmlFor="climb_type" className="form-label">
+              Climb
+            </label>
+            <select
+              id="climb_type"
+              name="climb_type"
+              value={formData.climb_type || ""}
+              onChange={handleClimbChange}
+              className="form-select"
+            >
+              <option value="">None</option>
+              <option value="attempted_side">Attempted climbing the side of the Tower</option>
+              <option value="attempted_center">Attempted climbing the center of the Tower</option>
+              <option value="success_side">Successfully climbed the side of the Tower</option>
+              <option value="success_center">Successfully climbed the center of the Tower</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Shot Accuracy slider */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <label htmlFor="shot_accuracy" className="form-label">
+              Shot Accuracy
+            </label>
+            <input
+              type="range"
+              className="form-range"
+              min="0"
+              max="100"
+              value={formData.shot_accuracy || 0}
+              id="shot_accuracy"
+              name="shot_accuracy"
+              onChange={handleAccuracyChange}
+            />
+            <div className="accuracy-display mt-2">
+              <span className="badge bg-primary">{formData.shot_accuracy || 0}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Autonomous Paths Image */}
+      <div className="field-section text-center">
+        <label className="form-label d-block mb-2 title-with-image">Autonomous Paths</label>
+
+        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
+          <img src={fieldImage} alt="Field" className="field-image" />
+
+          <div className="autonomous-paths-overlay">
+            {checkmarkPositions.map((pos, index) => (
+              <button
+                key={index}
+                type="button"
+                className={`checkmark-btn ${
+                  (formData.autonomous_paths_selected || []).includes(index) ? "active" : ""
+                }`}
+                style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+                onClick={() => handleCheckmarkToggle(index)}
+                title={`Autonomous Path ${index + 1}`}
+                aria-label={`Autonomous Path ${index + 1}`}
+              >
+                {(formData.autonomous_paths_selected || []).includes(index) && "✓"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Switch Sides intentionally omitted for Auton tab */}
+      </div>
+    </div>
+  );
 }
 
 function TeleopTab() {
@@ -219,7 +434,11 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting }) {
   );
 }
 
-export default function StandScoutingFixed() {
+
+
+
+
+export default function StandScouting() {
   const isOnline = useNetworkStatus();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -233,12 +452,50 @@ export default function StandScoutingFixed() {
     driver_station: "",
     match_number: "",
     starting_location: "",
+    has_robot_auton: "No",
+    auton_has_auton: false,
+    auton_shuttled: false,
+    auton_shoot_preloaded: false,
+    auton_shoot_other_fuel: false,
+    climb_type: "",
+    shot_accuracy: 0,
+    autonomous_paths_selected: [],
     comments: "",
   });
 
   const onSubmit = async (values) => {
+    // Map internal form keys to spreadsheet column headers and formats
+    const climbLabelMap = {
+      attempted_side: "Attempted climbing the side of the Tower",
+      attempted_center: "Attempted climbing the center of the Tower",
+      success_side: "Successfully climbed the side of the Tower",
+      success_center: "Successfully climbed the center of the Tower",
+      "": "None",
+    };
+
+    const pathLabelMap = [
+      "Shuttle-Right",
+      "Shuttle-Left",
+      "Tower",
+      "Depot",
+      "Chute",
+    ];
+
+    const selectedPaths = (values.autonomous_paths_selected || []).map((i) => pathLabelMap[i]).filter(Boolean);
+
     const submission = {
-      ...values,
+      "Scouter's Name": values.scouter_name || "",
+      "Scouter's Team #": values.scouter_team || "",
+      "Scouted Team #": values.scouted_team || "",
+      "Match #": values.match_number || "",
+      "Starting Location": values.starting_location || "",
+      "Has Auton?": values.has_robot_auton === "Yes" ? "Yes" : "No",
+      "Has Climb Auton?": climbLabelMap[values.climb_type || ""] || values.climb_type || "",
+      "Has Shuttling Auton?": values.auton_shuttled ? "Yes" : "No",
+      "Can shoot preload?": values.auton_shoot_preloaded ? "Yes" : "No",
+      "Can shoot Fuel outside of preloaded Fuel?": values.auton_shoot_other_fuel ? "Yes" : "No",
+      "Shot Accuracy": `${values.shot_accuracy || 0}%`,
+      "Auton Paths": selectedPaths.join(", "),
       submissionId: crypto.randomUUID(),
       sheet_name: "Stand Scouting",
     };
@@ -294,6 +551,14 @@ export default function StandScoutingFixed() {
       driver_station: preservedDriverStation,
       match_number: nextMatch,
       starting_location: "",
+      has_robot_auton: "No",
+      auton_has_auton: false,
+      auton_shuttled: false,
+      auton_shoot_preloaded: false,
+      auton_shoot_other_fuel: false,
+      climb_type: "",
+      shot_accuracy: 0,
+      autonomous_paths_selected: [],
       comments: "",
     };
 
@@ -363,7 +628,7 @@ export default function StandScoutingFixed() {
                   <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
                     <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
                   </div>
-                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab /></div>
+                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab /></div>
                   <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab /></div>
                   <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab /></div>

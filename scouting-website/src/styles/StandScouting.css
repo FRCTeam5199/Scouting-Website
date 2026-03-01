@@ -104,6 +104,10 @@
   white-space: nowrap;
 }
 
+.nav-tabs .nav-link {
+  font-size: 1.02rem;
+}
+
 /* title that sits above the image and visually part of the form */
 .title-with-image {
   display: inline-block;
@@ -132,6 +136,134 @@
   .starting-location-btn {
     width: 34px;
     height: 34px;
+    border-width: 1px;
+  }
+}
+
+/* Auton Tab Styles */
+.auton-tab {
+  width: 100%;
+  background-color: #5e9bf7;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  border-left: 4px solid #5e9bf7;
+  font-size: 1.05rem; /* slightly larger for readability */
+}
+
+/* Auton checkboxes section */
+.auton-checkboxes {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.auton-checkboxes .form-check {
+  margin-bottom: 0.75rem;
+}
+
+.auton-checkboxes .form-check:last-child {
+  margin-bottom: 0;
+}
+
+/* Overlay for autonomous paths checkmarks */
+.autonomous-paths-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Checkmark buttons positioned absolutely */
+.checkmark-btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #6c757d;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #6c757d;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* When the field container is rotated, counter-rotate buttons so they remain upright */
+.field-image-container.rotated .checkmark-btn,
+.field-image-container.rotated .starting-location-btn {
+  transform: translate(-50%, -50%) rotate(-180deg);
+}
+
+.checkmark-btn:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.checkmark-btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+.checkmark-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.5);
+}
+
+/* Accuracy display badge */
+.accuracy-display {
+  text-align: center;
+}
+
+.accuracy-display .badge {
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Make Auton button group and range visually white to contrast with blue background */
+.auton-tab .btn-outline-primary,
+.auton-tab .btn-outline-primary:hover,
+.auton-tab .btn-outline-primary:active,
+.auton-tab .btn-outline-primary:focus {
+  background-color: #ffffff;
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.auton-tab .form-range {
+  background-color: #ffffff;
+}
+
+/* Keep starting-location buttons upright when rotated too */
+.field-image-container.rotated .starting-location-btn {
+  transform: translate(-50%, -50%) rotate(-180deg);
+}
+
+/* Responsive adjustments for checkmarks */
+@media (max-width: 768px) {
+  .checkmark-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .checkmark-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
     border-width: 1px;
   }
 }
