@@ -1,11 +1,28 @@
-.pre-game-tab {
+.pre-game-tab,
+.auton-tab,
+.teleop-tab,
+.endgame-tab,
+.extra-tab,
+.comments-tab {
   width: 100%;
-  /* make the pre-game area visually part of the form with blue accent */
+  /* blue background for all tabs */
   background-color: #5e9bf7;
   padding: 1rem;
   border-radius: 0.25rem;
   border-left: 4px solid #5e9bf7;
 }
+
+/* keep the single form card narrow and centered like Settings */
+
+.form-check-label {
+  font-size: 1.2rem;
+}
+
+.form-check-input {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 
 /* keep the single form card narrow and centered like Settings */
 .card-body {
@@ -19,6 +36,47 @@
 
 .form-label {
   font-size: 1.1rem;
+}
+
+/* Global checkbox styling - applied to all checkboxes across all tabs */
+.form-check {
+  margin-bottom: 0.5rem;
+}
+
+/* larger checkboxes for emphasis (e.g. auton section) */
+.form-check-lg .form-check-input {
+  width: 2rem;
+  height: 2rem;
+}
+
+.form-check-lg .form-check-label {
+  font-size: 1.4rem;
+}
+
+
+/* Climb button group - ensure equal heights */
+.climb-button-group .climb-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+}
+
+/* Rescout button group styling */
+.rescout-button-group .btn {
+  min-height: 2.5rem;
+  font-size: 1.1rem;
+}
+
+/* add space between penalties and checkboxes above on small screens */
+.penalties-section {
+  margin-top: 2rem;
+}
+
+@media (max-width: 576px) {
+  .penalties-section {
+    margin-top: 2rem;
+  }
 }
 
 /* form section (inputs) */
@@ -153,7 +211,7 @@
 .teleop-tab,
 .pre-game-tab,
 .extra-tab,
-.endgame-tab {
+.endgame-tab, .comments-tab {
   width: 100%;
   background-color: #5e9bf7;
   padding: 1rem;

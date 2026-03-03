@@ -11,14 +11,14 @@ function validate(values) {
   if (!values.scouter_name?.toString().trim()) errors.scouter_name = "Required";
   if (!values.scouter_team?.toString().trim()) errors.scouter_team = "Required";
   if (!values.scouted_team?.toString().trim()) errors.scouted_team = "Required";
-  if (!values.driver_station?.toString().trim()) errors.driver_station = "Required";
+  if (!values.alliance) errors.alliance = "Required";
   if (!values.match_number?.toString().trim()) errors.match_number = "Required";
   if (!values.starting_location?.toString().trim()) errors.starting_location = "Required";
   return errors;
 }
 
 function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
-  const isBlueAlliance = formData.driver_station?.startsWith("Blue");
+  const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
     : "/icons/redAllianceField-2026.png";
@@ -85,27 +85,27 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
             <div className="invalid-feedback">{errors.scouted_team}</div>
           </div>
 
-          <div className="col-md-6 mb-3">
-            <label htmlFor="driver_station" className="form-label">
-              Driver Station <span className="text-danger">*</span>
+          <div className="col-md-6 mb-3 text-center">
+            <label className="form-label d-block mb-2">
+              Alliance <span className="text-danger">*</span>
             </label>
-            <select
-              id="driver_station"
-              name="driver_station"
-              value={formData.driver_station}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`form-select ${touched.driver_station && errors.driver_station ? "is-invalid" : ""}`}
-            >
-              <option value="">Select a driver station</option>
-              <option value="Red Alliance 1">Red Alliance 1</option>
-              <option value="Red Alliance 2">Red Alliance 2</option>
-              <option value="Red Alliance 3">Red Alliance 3</option>
-              <option value="Blue Alliance 1">Blue Alliance 1</option>
-              <option value="Blue Alliance 2">Blue Alliance 2</option>
-              <option value="Blue Alliance 3">Blue Alliance 3</option>
-            </select>
-            <div className="invalid-feedback">{errors.driver_station}</div>
+            <div className="btn-group w-100" role="group" aria-label="Alliance selection">
+              <button
+                type="button"
+                className={`btn btn-lg text-white ${formData.alliance === "Red" ? "bg-danger" : "btn-outline-danger"}`}
+                onClick={() => handleChange({ target: { name: "alliance", value: "Red", type: "text" } })}
+              >
+                Red Alliance
+              </button>
+              <button
+                type="button"
+                className={`btn btn-lg text-white ${formData.alliance === "Blue" ? "bg-primary" : "btn-outline-primary"}`}
+                onClick={() => handleChange({ target: { name: "alliance", value: "Blue", type: "text" } })}
+              >
+                Blue Alliance
+              </button>
+            </div>
+            {errors.alliance && <div className="text-danger mt-1">{errors.alliance}</div>}
           </div>
         </div>
 
@@ -179,7 +179,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
 }
 
 function AutonTab({ formData, handleChange, rotated, setRotated }) {
-  const isBlueAlliance = formData.driver_station?.startsWith("Blue");
+  const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
     : "/icons/redAllianceField-2026.png";
@@ -260,7 +260,7 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
           <div className="row mb-4">
             <div className="col-12">
               <div className="auton-checkboxes">
-                <div className="form-check mb-2">
+                <div className="form-check form-check-lg mb-2">
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -274,7 +274,7 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
                   </label>
                 </div>
 
-                <div className="form-check mb-2">
+                <div className="form-check form-check-lg mb-2">
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -288,7 +288,7 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
                   </label>
                 </div>
 
-                <div className="form-check mb-2">
+                <div className="form-check form-check-lg mb-2">
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -302,7 +302,7 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
                   </label>
                 </div>
 
-                <div className="form-check">
+                <div className="form-check form-check-lg">
                   <input
                     className="form-check-input"
                     type="checkbox"
@@ -320,25 +320,35 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
           </div>
         )}
 
-        {/* Climb dropdown */}
-        <div className="row mb-4">
-          <div className="col-12">
-            <label htmlFor="climb_type" className="form-label">
-              Climb
-            </label>
-            <select
-              id="climb_type"
-              name="climb_type"
-              value={formData.climb_type || ""}
-              onChange={handleClimbChange}
-              className="form-select"
-            >
-              <option value="">None</option>
-              <option value="attempted_side">Attempted climbing the side of the Tower</option>
-              <option value="attempted_center">Attempted climbing the center of the Tower</option>
-              <option value="success_side">Successfully climbed the side of the Tower</option>
-              <option value="success_center">Successfully climbed the center of the Tower</option>
-            </select>
+        {/* Auton climb location checkboxes */}
+        <div className="row mb-4 justify-content-center">
+          <div className="col-auto">
+            <div className="form-check form-check-lg mb-2">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="auton_climb_side"
+                name="auton_climbed_side"
+                checked={formData.auton_climbed_side || false}
+                onChange={(e) => handleChange(e)}
+              />
+              <label className="form-check-label" htmlFor="auton_climb_side">
+                Climbed on side of Tower
+              </label>
+            </div>
+            <div className="form-check form-check-lg">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="auton_climb_center"
+                name="auton_climbed_center"
+                checked={formData.auton_climbed_center || false}
+                onChange={(e) => handleChange(e)}
+              />
+              <label className="form-check-label" htmlFor="auton_climb_center">
+                Climbed on center of Tower
+              </label>
+            </div>
           </div>
         </div>
 
@@ -403,6 +413,13 @@ function TeleopTab({ formData, handleChange }) {
     handleChange({ target: { name: "fuel_scored", value: next, type: "text" } });
   };
 
+  const updateShuttles = (delta) => {
+    const current = Number(formData.teleop_shuttled || 0);
+    let next = current + delta;
+    if (next < 0) next = 0;
+    handleChange({ target: { name: "teleop_shuttled", value: next, type: "text" } });
+  };
+
   const handleTeleopAccuracyChange = (e) => {
     handleChange(e);
   };
@@ -414,8 +431,8 @@ function TeleopTab({ formData, handleChange }) {
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.fuel_scored || 0}
         </div>
-        {[1, 5, 10].map((step) => (
-          <div key={step} className="btn-group mb-3" role="group" aria-label={`adjust ${step}`}>
+        {[1, 2, 3].map((step) => (
+          <div key={`fuel-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust ${step}`}>
             <button
               type="button"
               className="btn btn-danger btn-lg"
@@ -430,6 +447,34 @@ function TeleopTab({ formData, handleChange }) {
               type="button"
               className="btn btn-success btn-lg"
               onClick={() => updateFuel(step)}
+            >
+              +
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="form-section text-center mb-4">
+        <h2 className="mb-3">Fuel Shuttled</h2>
+        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
+          {formData.teleop_shuttled || 0}
+        </div>
+        {[1, 2, 3].map((step) => (
+          <div key={`shuttle-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust shuttle ${step}`}>
+            <button
+              type="button"
+              className="btn btn-danger btn-lg"
+              onClick={() => updateShuttles(-step)}
+            >
+              -
+            </button>
+            <button type="button" className="btn btn-light btn-lg" disabled>
+              +{step}
+            </button>
+            <button
+              type="button"
+              className="btn btn-success btn-lg"
+              onClick={() => updateShuttles(step)}
             >
               +
             </button>
@@ -501,9 +546,6 @@ function EndgameTab({ formData, handleChange }) {
 
   const handleToggleTimer = () => {
     timer.toggle();
-    if (!timer.isRunning) {
-      handleTimerChange(timer.seconds + 1);
-    }
   };
 
   const handleResetTimer = () => {
@@ -511,12 +553,10 @@ function EndgameTab({ formData, handleChange }) {
     handleTimerChange(0);
   };
 
-  // Sync timer seconds to form data
+  // Sync timer seconds to form data whenever seconds change
   React.useEffect(() => {
-    if (timer.isRunning) {
-      handleTimerChange(timer.seconds);
-    }
-  }, [timer.seconds, timer.isRunning]);
+    handleTimerChange(timer.seconds);
+  }, [timer.seconds]);
 
   return (
     <div className="endgame-tab">
@@ -555,7 +595,7 @@ function EndgameTab({ formData, handleChange }) {
         {/* Right side: Climb radio */}
         <div className="col-md-6 mb-4">
           <label className="form-label d-block mb-3">Climb</label>
-          <div className="btn-group w-100 d-flex" role="group" aria-label="Climb level">
+          <div className="btn-group w-100 d-flex climb-button-group" role="group" aria-label="Climb level">
             {["", "L1", "L2", "L3", "Failed Climb"].map((value) => (
               <div key={value} style={{ flex: 1 }}>
                 <input
@@ -568,7 +608,7 @@ function EndgameTab({ formData, handleChange }) {
                   onChange={(e) => handleChange(e)}
                   autoComplete="off"
                 />
-                <label className="btn btn-outline-primary w-100" htmlFor={`climb_${value || "none"}`}>
+                <label className="btn btn-outline-primary w-100 climb-button" htmlFor={`climb_${value || "none"}`}>
                   {value || "None"}
                 </label>
               </div>
@@ -586,15 +626,17 @@ function EndgameTab({ formData, handleChange }) {
         <div className="d-flex gap-2 justify-content-center mb-3">
           <button
             type="button"
-            className="btn btn-danger btn-sm"
+            className="btn btn-danger"
             onClick={handleResetTimer}
+            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}
           >
             Reset
           </button>
           <button
             type="button"
-            className="btn btn-primary btn-lg"
+            className="btn btn-primary"
             onClick={handleToggleTimer}
+            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}
           >
             {timer.isRunning ? "Stop Timer" : "Toggle Timer"}
           </button>
@@ -604,32 +646,301 @@ function EndgameTab({ formData, handleChange }) {
   );
 }
 
-function ExtraTab() {
-  return <div className="p-3">Extra activities or notes.</div>;
+function ExtraTab({ formData, handleChange }) {
+  const updatePenalties = (delta) => {
+    const current = Number(formData.defense_penalties || 0);
+    let next = current + delta;
+    if (next < 0) next = 0;
+    handleChange({ target: { name: "defense_penalties", value: next, type: "text" } });
+  };
+
+  return (
+    <div className="extra-tab">
+      <div className="form-section mb-4">
+        <h3 className="mb-3">Defense</h3>
+        <div className="row">
+          <div className="col-md-4">
+            <label htmlFor="defense_rating" className="form-label">
+              Rating
+            </label>
+            <input
+              type="range"
+              className="form-range"
+              min="1"
+              max="5"
+              value={formData.defense_rating || 1}
+              id="defense_rating"
+              name="defense_rating"
+              onChange={handleChange}
+            />
+            <div className="text-center mt-1">
+              <span className="badge bg-secondary">{formData.defense_rating || 1}</span>
+            </div>
+          </div>
+
+          <div className="col-md-4">
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="defense_chasing"
+                name="defense_chasing"
+                checked={formData.defense_chasing || false}
+                onChange={(e) => handleChange(e)}
+              />
+              <label className="form-check-label" htmlFor="defense_chasing">
+                Chasing
+              </label>
+            </div>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="defense_pinning"
+                name="defense_pinning"
+                checked={formData.defense_pinning || false}
+                onChange={(e) => handleChange(e)}
+              />
+              <label className="form-check-label" htmlFor="defense_pinning">
+                Pinning
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="row mt-4">
+          <div className="col-md-4 penalties-section">
+            <label className="form-label d-block mb-2">Penalties</label>
+            <div className="btn-group mb-2" role="group" aria-label="penalty 1">
+              <button
+                type="button"
+                className="btn btn-danger btn-lg"
+                onClick={() => updatePenalties(-1)}
+              >
+                -
+              </button>
+              <button type="button" className="btn btn-light btn-lg" disabled>
+                {formData.defense_penalties || 0}
+              </button>
+              <button
+                type="button"
+                className="btn btn-success btn-lg"
+                onClick={() => updatePenalties(1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <h3 className="mb-3">Drive</h3>
+        {[
+          { label: "Robot Speed", name: "drive_robot_speed" },
+          { label: "Intake-to-Shooter Speed", name: "drive_intake_shooter_speed" },
+          { label: "Driver Skill", name: "drive_driver_skill" },
+        ].map(({ label, name }) => (
+          <div key={name} className="mb-3">
+            <label htmlFor={name} className="form-label">
+              {label}
+            </label>
+            <input
+              type="range"
+              className="form-range"
+              min="1"
+              max="5"
+              value={formData[name] || 1}
+              id={name}
+              name={name}
+              onChange={handleChange}
+            />
+            <div className="text-center mt-1">
+              <span className="badge bg-secondary">{formData[name] || 1}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-function CommentsTab({ formData, handleChange, handleBlur, isSubmitting }) {
+function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClearForm }) {
+  const [showClearModal, setShowClearModal] = useState(false);
+  const checkboxes = [
+    { name: "no_show", label: "No show" },
+    { name: "didnt_move", label: "Didn’t move" },
+    { name: "broke", label: "Broke" },
+    { name: "penalties", label: "Penalties" },
+    { name: "good_vs_defense", label: "Good vs. Defense" },
+    { name: "bad_vs_defense", label: "Bad vs. Defense" },
+    { name: "jittery_drive", label: "Jittery drive" },
+    { name: "good_vibes", label: "Good vibes" },
+    { name: "bad_vibes", label: "Bad vibes" },
+    { name: "can_only_shoot_specific_spots", label: "Can only shoot from specific spots" },
+    { name: "can_shoot_stationary_anywhere", label: "Can shoot while stationary from any part of the field" },
+    { name: "can_shoot_moving", label: "Can shoot while moving" },
+    { name: "can_shoot_moving_rotating", label: "Can shoot while moving and rotating the robot" },
+  ];
+
   return (
-    <div className="p-3">
-      <div className="mb-3">
-        <label htmlFor="comments" className="form-label">
-          Comments
-        </label>
-        <textarea id="comments" name="comments" value={formData.comments} onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3}></textarea>
+    <div className="p-3 comments-tab">
+
+      <div className="row g-3 mb-4">
+        {checkboxes.map((cb, i) => (
+          <div key={cb.name} className="col-6">
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id={cb.name}
+                name={cb.name}
+                checked={formData[cb.name] || false}
+                onChange={(e) => handleChange(e)}
+              />
+              <label className="form-check-label" htmlFor={cb.name}>
+                {cb.label}
+              </label>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="d-grid mt-4">
-        <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg">
-          {isSubmitting ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Saving...
-            </>
-          ) : (
-            "Submit Scouting Data"
-          )}
-        </button>
+      <div className="mb-3">
+        <label htmlFor="serious_comments" className="form-label">
+          Serious Comments
+        </label>
+        <textarea
+          id="serious_comments"
+          name="serious_comments"
+          value={formData.serious_comments}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className="form-control"
+          rows={3}
+        ></textarea>
       </div>
+
+      <div className="mb-3">
+        <label htmlFor="funny_comments" className="form-label">
+          Funny Comments
+        </label>
+        <textarea
+          id="funny_comments"
+          name="funny_comments"
+          value={formData.funny_comments}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className="form-control"
+          rows={3}
+        ></textarea>
+      </div>
+
+      <div className="row g-3 align-items-end mt-4">
+        <div className="col-md-2">
+          <label className="form-label d-block mb-2">Rescout Request</label>
+          <div className="btn-group w-100 rescout-button-group" role="group" aria-label="Rescout request">
+            <input
+              type="radio"
+              className="btn-check"
+              name="rescout_request"
+              id="rescout_no"
+              value="No"
+              checked={formData.rescout_request === "No"}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label className="btn btn-outline-primary" htmlFor="rescout_no">
+              No
+            </label>
+
+            <input
+              type="radio"
+              className="btn-check"
+              name="rescout_request"
+              id="rescout_yes"
+              value="Yes"
+              checked={formData.rescout_request === "Yes"}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label className="btn btn-outline-primary" htmlFor="rescout_yes">
+              Yes
+            </label>
+          </div>
+        </div>
+        <div className="col-md-2">
+          <button
+            type="button"
+            className="btn btn-danger btn-lg w-100"
+            onClick={() => setShowClearModal(true)}
+          >
+            Clear Form
+          </button>
+        </div>
+        <div className="col-md-6 col-lg-5"></div>
+        <div className="col-md-4">
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg w-100">
+            {isSubmitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+              </>
+            ) : (
+              "Submit Scouting Data"
+            )}
+          </button>
+        </div>
+      </div>
+      {showClearModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "2rem",
+              borderRadius: "0.5rem",
+              textAlign: "center",
+              minWidth: "400px",
+            }}
+          >
+            <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem", color: "#000" }}>
+              Are you sure you want to clear this form?
+            </p>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowClearModal(false)}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  onClearForm();
+                  setShowClearModal(false);
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -652,18 +963,20 @@ export default function StandScouting() {
     scouter_name: "",
     scouter_team: "",
     scouted_team: "",
-    driver_station: "",
+    alliance: "",
     match_number: "",
     starting_location: "",
     has_robot_auton: "No",
     auton_has_auton: false,
     auton_shuttled: false,
+    auton_climbed_side: false,
+    auton_climbed_center: false,
     auton_shoot_preloaded: false,
     auton_shoot_other_fuel: false,
-    climb_type: "",
     shot_accuracy: 0,
     autonomous_paths_selected: [],
     fuel_scored: 0,
+    teleop_shuttled: 0,
     teleop_shot_accuracy: 0,
     teleop_turret: false,
     teleop_shoot_on_fly: false,
@@ -671,6 +984,31 @@ export default function StandScouting() {
     endgame_climbed_side: false,
     endgame_climbed_center: false,
     endgame_time_to_climb: 0,
+    // Extra tab
+    defense_rating: 3,
+    defense_chasing: false,
+    defense_pinning: false,
+    defense_penalties: 0,
+    drive_robot_speed: 3,
+    drive_intake_shooter_speed: 3,
+    drive_driver_skill: 3,
+    // Comments tab
+    no_show: false,
+    didnt_move: false,
+    broke: false,
+    penalties: false,
+    good_vs_defense: false,
+    bad_vs_defense: false,
+    jittery_drive: false,
+    good_vibes: false,
+    bad_vibes: false,
+    can_only_shoot_specific_spots: false,
+    can_shoot_stationary_anywhere: false,
+    can_shoot_moving: false,
+    can_shoot_moving_rotating: false,
+    serious_comments: "",
+    funny_comments: "",
+    rescout_request: "No",
     comments: "",
   });
 
@@ -680,7 +1018,17 @@ export default function StandScouting() {
       try {
         const draft = await loadDraft("Stand Scouting");
         if (draft && !draftLoaded) {
-          setInitialValues(draft);
+          // Normalize string booleans from IndexedDB ("true"/"false") to actual booleans
+          const normalizeDraft = (obj) => {
+            const out = {};
+            Object.entries(obj).forEach(([k, v]) => {
+              if (v === "true") out[k] = true;
+              else if (v === "false") out[k] = false;
+              else out[k] = v;
+            });
+            return out;
+          };
+          setInitialValues(normalizeDraft(draft));
           setDraftLoaded(true);
         }
       } catch (error) {
@@ -694,13 +1042,7 @@ export default function StandScouting() {
 
   const onSubmit = async (values) => {
     // Map internal form keys to spreadsheet column headers and formats
-    const climbLabelMap = {
-      attempted_side: "Attempted climbing the side of the Tower",
-      attempted_center: "Attempted climbing the center of the Tower",
-      success_side: "Successfully climbed the side of the Tower",
-      success_center: "Successfully climbed the center of the Tower",
-      "": "None",
-    };
+    // climbLabelMap removed - climb_type dropdown replaced by explicit checkboxes
 
     const pathLabelMap = [
       "Shuttle-Right",
@@ -719,20 +1061,48 @@ export default function StandScouting() {
       "Match #": values.match_number || "",
       "Starting Location": values.starting_location || "",
       "Has Auton?": values.has_robot_auton === "Yes" ? "Yes" : "No",
-      "Has Climb Auton?": climbLabelMap[values.climb_type || ""] || values.climb_type || "",
       "Has Shuttling Auton?": values.auton_shuttled ? "Yes" : "No",
       "Can shoot preload?": values.auton_shoot_preloaded ? "Yes" : "No",
       "Can shoot Fuel outside of preloaded Fuel?": values.auton_shoot_other_fuel ? "Yes" : "No",
       "Shot Accuracy (Auton)": `${values.shot_accuracy || 0}%`,
       "Auton Paths": selectedPaths.join(", "),
+      "Auton Climb Side": values.auton_climbed_side ? "Yes" : "No",
+      "Auton Climb Center": values.auton_climbed_center ? "Yes" : "No",
       "Fuel Scored (Teleop)": values.fuel_scored || 0,
+      "Shuttles (Teleop)": values.teleop_shuttled || 0,
       "Shot Accuracy (Teleop)": `${values.teleop_shot_accuracy || 0}%`,
+      "Alliance": values.alliance || "",
       "Has Turret?": values.teleop_turret ? "Yes" : "No",
       "Can shoot on the fly?": values.teleop_shoot_on_fly ? "Yes" : "No",
       "Climb (Teleop)": values.endgame_climb || "None",
       "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
       "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
       "Time to Climb": values.endgame_time_to_climb || 0,
+      // Extra tab fields
+      "Defense Rating": values.defense_rating || 0,
+      "Chasing": values.defense_chasing ? "Yes" : "No",
+      "Pinning": values.defense_pinning ? "Yes" : "No",
+      "Penalties (Defense)": values.defense_penalties || 0,
+      "Robot Speed": values.drive_robot_speed || 0,
+      "Intake-to-Shooter Speed": values.drive_intake_shooter_speed || 0,
+      "Driver Skill": values.drive_driver_skill || 0,
+      // Comments tab fields
+      "No show": values.no_show ? "Yes" : "No",
+      "Did not move": values.didnt_move ? "Yes" : "No",
+      "Broke": values.broke ? "Yes" : "No",
+      "Penalties": values.penalties ? "Yes" : "No",
+      "Good vs. Defense": values.good_vs_defense ? "Yes" : "No",
+      "Bad vs. Defense": values.bad_vs_defense ? "Yes" : "No",
+      "Jittery drive": values.jittery_drive ? "Yes" : "No",
+      "Good vibes": values.good_vibes ? "Yes" : "No",
+      "Bad vibes": values.bad_vibes ? "Yes" : "No",
+      "Can shoot from only specific spots": values.can_only_shoot_specific_spots ? "Yes" : "No",
+      "Can shoot while stationary from any part of the field": values.can_shoot_stationary_anywhere ? "Yes" : "No",
+      "Can shoot while moving": values.can_shoot_moving ? "Yes" : "No",
+      "Can shoot while moving and rotating the robot": values.can_shoot_moving_rotating ? "Yes" : "No",
+      "Serious Comments": values.serious_comments || "",
+      "Funny Comments": values.funny_comments || "",
+      "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
       submissionId: crypto.randomUUID(),
       sheet_name: "Stand Scouting",
     };
@@ -754,6 +1124,13 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
+
+  const clearForm = () => {
+    resetForm();
+    clearDraft("Stand Scouting").catch((error) => {
+      console.log("Failed to clear draft:", error);
+    });
+  };
 
   // Auto-save form data every 5 seconds
   React.useEffect(() => {
@@ -779,10 +1156,10 @@ export default function StandScouting() {
 
     setShowValidationAlert(false);
 
-    // Preserve scouter fields and driver station, increment match if numeric
+    // Preserve scouter fields and alliance, increment match if numeric
     const preservedName = formData.scouter_name || initialValues.scouter_name;
     const preservedScouterTeam = formData.scouter_team || initialValues.scouter_team;
-    const preservedDriverStation = formData.driver_station || initialValues.driver_station;
+    const preservedAlliance = formData.alliance || initialValues.alliance;
 
     let nextMatch = "";
     const rawMatch = String(formData.match_number || initialValues.match_number || "").trim();
@@ -796,18 +1173,20 @@ export default function StandScouting() {
       scouter_name: preservedName,
       scouter_team: preservedScouterTeam,
       scouted_team: "",
-      driver_station: preservedDriverStation,
+      alliance: preservedAlliance,
       match_number: nextMatch,
       starting_location: "",
       has_robot_auton: "No",
       auton_has_auton: false,
       auton_shuttled: false,
+      auton_climbed_side: false,
+      auton_climbed_center: false,
       auton_shoot_preloaded: false,
       auton_shoot_other_fuel: false,
-      climb_type: "",
       shot_accuracy: 0,
       autonomous_paths_selected: [],
       fuel_scored: 0,
+      teleop_shuttled: 0,
       teleop_shot_accuracy: 0,
       teleop_turret: false,
       teleop_shoot_on_fly: false,
@@ -815,6 +1194,31 @@ export default function StandScouting() {
       endgame_climbed_side: false,
       endgame_climbed_center: false,
       endgame_time_to_climb: 0,
+      // Extra tab
+      defense_rating: 3,
+      defense_chasing: false,
+      defense_pinning: false,
+      defense_penalties: 0,
+      drive_robot_speed: 3,
+      drive_intake_shooter_speed: 3,
+      drive_driver_skill: 3,
+      // Comments tab
+      no_show: false,
+      didnt_move: false,
+      broke: false,
+      penalties: false,
+      good_vs_defense: false,
+      bad_vs_defense: false,
+      jittery_drive: false,
+      good_vibes: false,
+      bad_vibes: false,
+      can_only_shoot_specific_spots: false,
+      can_shoot_stationary_anywhere: false,
+      can_shoot_moving: false,
+      can_shoot_moving_rotating: false,
+      serious_comments: "",
+      funny_comments: "",
+      rescout_request: "No",
       comments: "",
     };
 
@@ -888,9 +1292,9 @@ export default function StandScouting() {
                   <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab formData={formData} handleChange={handleChange} /></div>
-                  <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab /></div>
+                  <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="comments-pane" role="tabpanel" aria-labelledby="comments-tab" tabIndex="0">
-                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} />
+                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} onClearForm={clearForm} />
                   </div>
                 </div>
               </form>

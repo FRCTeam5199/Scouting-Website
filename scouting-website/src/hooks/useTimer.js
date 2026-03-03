@@ -1,48 +1,53 @@
 import { useState, useEffect, useRef } from "react";
 
+
 export default function useTimer(initialSeconds = 0) {
-  const [seconds, setSeconds] = useState(initialSeconds);
+  const [time, setTime] = useState(initialSeconds * 100);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        setSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+    if (!isRunning) {
+      clearInterval(intervalRef.current);
+      return;
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRunning]);
+    intervalRef.current = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 10);
 
-  const toggle = () => setIsRunning(!isRunning);
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, [isRunning]); // ← DO NOT REMOVE BRACKETS
+
+  const toggle = () => setIsRunning((prev) => !prev);
+
   const reset = () => {
-    setSeconds(0);
+    setTime(0);
     setIsRunning(false);
   };
 
-  // Format seconds to MM:SS
-  const formatTime = (secs) => {
-    const mins = Math.floor(secs / 60);
-    const secsRemainder = secs % 60;
+  const seconds = Math.floor(time / 100);
+  const centiseconds = time % 100;
+
+  const formatTime = () => {
+    const mins = Math.floor(seconds / 60);
+    const secsRemainder = seconds % 60;
+
     return `${mins.toString().padStart(2, "0")}:${secsRemainder
+      .toString()
+      .padStart(2, "0")}.${centiseconds
       .toString()
       .padStart(2, "0")}`;
   };
 
   return {
     seconds,
+    centiseconds,
     isRunning,
     toggle,
     reset,
-    formatTime: () => formatTime(seconds),
+    formatTime,
   };
 }
