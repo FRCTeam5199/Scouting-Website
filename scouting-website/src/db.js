@@ -18,5 +18,12 @@ export const dbPromise = openDB('scouting-db', 1, {
         autoIncrement: true,
       });
     }
+
+    // Create object store for form drafts
+    if (!db.objectStoreNames.contains('drafts')) {
+      db.createObjectStore('drafts', {
+        keyPath: 'sheetName',
+      });
+    }
   },
 });

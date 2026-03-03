@@ -90,3 +90,72 @@ export async function getLastSettings() {
   // For now, return the last one in the array
   return settingsData[settingsData.length - 1];
 }
+
+// Auto-save form drafts to IndexedDB
+export async function saveDraft(formData, sheetName = "Stand Scouting") {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("scouting-db", 1);
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("drafts")) {
+        db.close();
+        return reject(new Error("Drafts store not available"));
+      }
+      const tx = db.transaction("drafts", "readwrite");
+      const store = tx.objectStore("drafts");
+      store.put({ sheetName, data: formData, timestamp: Date.now() });
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Load draft from IndexedDB
+export async function loadDraft(sheetName = "Stand Scouting") {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("scouting-db", 1);
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("drafts")) {
+        db.close();
+        return resolve(null);
+      }
+      const tx = db.transaction("drafts", "readonly");
+      const store = tx.objectStore("drafts");
+      const getRequest = store.get(sheetName);
+      getRequest.onsuccess = () => {
+        db.close();
+        resolve(getRequest.result?.data || null);
+      };
+      getRequest.onerror = () => reject(getRequest.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Clear draft
+export async function clearDraft(sheetName = "Stand Scouting") {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("scouting-db", 1);
+    request.onsuccess = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("drafts")) {
+        db.close();
+        return resolve();
+      }
+      const tx = db.transaction("drafts", "readwrite");
+      const store = tx.objectStore("drafts");
+      store.delete(sheetName);
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}

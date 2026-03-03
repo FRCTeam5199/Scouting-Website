@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
-import { saveOffline, sendToServer } from "../sync";
+import useTimer from "../hooks/useTimer";
+import { saveOffline, sendToServer, saveDraft, loadDraft, clearDraft } from "../sync";
 import "../styles/StandScouting.css";
 
 // Validation function
@@ -491,8 +492,116 @@ function TeleopTab({ formData, handleChange }) {
   );
 }
 
-function EndgameTab() {
-  return <div className="p-3">Endgame fields go here.</div>;
+function EndgameTab({ formData, handleChange }) {
+  const timer = useTimer(formData.endgame_time_to_climb || 0);
+
+  const handleTimerChange = (newSeconds) => {
+    handleChange({ target: { name: "endgame_time_to_climb", value: newSeconds, type: "text" } });
+  };
+
+  const handleToggleTimer = () => {
+    timer.toggle();
+    if (!timer.isRunning) {
+      handleTimerChange(timer.seconds + 1);
+    }
+  };
+
+  const handleResetTimer = () => {
+    timer.reset();
+    handleTimerChange(0);
+  };
+
+  // Sync timer seconds to form data
+  React.useEffect(() => {
+    if (timer.isRunning) {
+      handleTimerChange(timer.seconds);
+    }
+  }, [timer.seconds, timer.isRunning]);
+
+  return (
+    <div className="endgame-tab">
+      <div className="row">
+        {/* Left side: Checkboxes for climb locations */}
+        <div className="col-md-6 mb-4">
+          <label className="form-label d-block mb-3">Climb Location</label>
+          <div className="form-check mb-2">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="climb_side"
+              name="endgame_climbed_side"
+              checked={formData.endgame_climbed_side || false}
+              onChange={(e) => handleChange(e)}
+            />
+            <label className="form-check-label" htmlFor="climb_side">
+              Climbed on side of Tower
+            </label>
+          </div>
+          <div className="form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="climb_center"
+              name="endgame_climbed_center"
+              checked={formData.endgame_climbed_center || false}
+              onChange={(e) => handleChange(e)}
+            />
+            <label className="form-check-label" htmlFor="climb_center">
+              Climbed on center of Tower
+            </label>
+          </div>
+        </div>
+
+        {/* Right side: Climb radio */}
+        <div className="col-md-6 mb-4">
+          <label className="form-label d-block mb-3">Climb</label>
+          <div className="btn-group w-100 d-flex" role="group" aria-label="Climb level">
+            {["", "L1", "L2", "L3", "Failed Climb"].map((value) => (
+              <div key={value} style={{ flex: 1 }}>
+                <input
+                  type="radio"
+                  className="btn-check"
+                  name="endgame_climb"
+                  id={`climb_${value || "none"}`}
+                  value={value}
+                  checked={formData.endgame_climb === value}
+                  onChange={(e) => handleChange(e)}
+                  autoComplete="off"
+                />
+                <label className="btn btn-outline-primary w-100" htmlFor={`climb_${value || "none"}`}>
+                  {value || "None"}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Timer section */}
+      <div className="form-section mb-4 text-center">
+        <label className="form-label d-block mb-3">Time to climb from Tower Base</label>
+        <div className="display-1 mb-3" style={{ fontSize: "2.5rem", fontFamily: "monospace" }}>
+          {timer.formatTime()}
+        </div>
+        <div className="d-flex gap-2 justify-content-center mb-3">
+          <button
+            type="button"
+            className="btn btn-danger btn-sm"
+            onClick={handleResetTimer}
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary btn-lg"
+            onClick={handleToggleTimer}
+          >
+            {timer.isRunning ? "Stop Timer" : "Toggle Timer"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ExtraTab() {
@@ -536,6 +645,9 @@ export default function StandScouting() {
   const [showValidationAlert, setShowValidationAlert] = useState(false);
   const [rotated, setRotated] = useState(false);
 
+  // Load draft on mount
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
   const [initialValues, setInitialValues] = useState({
     scouter_name: "",
     scouter_team: "",
@@ -555,8 +667,30 @@ export default function StandScouting() {
     teleop_shot_accuracy: 0,
     teleop_turret: false,
     teleop_shoot_on_fly: false,
+    endgame_climb: "",
+    endgame_climbed_side: false,
+    endgame_climbed_center: false,
+    endgame_time_to_climb: 0,
     comments: "",
   });
+
+  // Load draft from IndexedDB on mount
+  React.useEffect(() => {
+    const loadSavedDraft = async () => {
+      try {
+        const draft = await loadDraft("Stand Scouting");
+        if (draft && !draftLoaded) {
+          setInitialValues(draft);
+          setDraftLoaded(true);
+        }
+      } catch (error) {
+        console.log("Failed to load draft:", error);
+      }
+    };
+    if (!draftLoaded) {
+      loadSavedDraft();
+    }
+  }, [draftLoaded]);
 
   const onSubmit = async (values) => {
     // Map internal form keys to spreadsheet column headers and formats
@@ -589,12 +723,16 @@ export default function StandScouting() {
       "Has Shuttling Auton?": values.auton_shuttled ? "Yes" : "No",
       "Can shoot preload?": values.auton_shoot_preloaded ? "Yes" : "No",
       "Can shoot Fuel outside of preloaded Fuel?": values.auton_shoot_other_fuel ? "Yes" : "No",
-      "Shot Accuracy": `${values.shot_accuracy || 0}%`,
+      "Shot Accuracy (Auton)": `${values.shot_accuracy || 0}%`,
       "Auton Paths": selectedPaths.join(", "),
-      "Teleop Fuel Scored": values.fuel_scored || 0,
-      "Teleop Shot Accuracy": `${values.teleop_shot_accuracy || 0}%`,
-      "Turret": values.teleop_turret ? "Yes" : "No",
-      "Shoot on the fly": values.teleop_shoot_on_fly ? "Yes" : "No",
+      "Fuel Scored (Teleop)": values.fuel_scored || 0,
+      "Shot Accuracy (Teleop)": `${values.teleop_shot_accuracy || 0}%`,
+      "Has Turret?": values.teleop_turret ? "Yes" : "No",
+      "Can shoot on the fly?": values.teleop_shoot_on_fly ? "Yes" : "No",
+      "Climb (Teleop)": values.endgame_climb || "None",
+      "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
+      "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
+      "Time to Climb": values.endgame_time_to_climb || 0,
       submissionId: crypto.randomUUID(),
       sheet_name: "Stand Scouting",
     };
@@ -616,6 +754,17 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
+
+  // Auto-save form data every 5 seconds
+  React.useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      saveDraft(formData, "Stand Scouting").catch((error) => {
+        console.log("Auto-save failed:", error);
+      });
+    }, 5000);
+
+    return () => clearInterval(autoSaveInterval);
+  }, [formData]);
 
   // wrapper submit that checks validation synchronously via validate(formData)
   const onFormSubmit = async (e) => {
@@ -662,10 +811,15 @@ export default function StandScouting() {
       teleop_shot_accuracy: 0,
       teleop_turret: false,
       teleop_shoot_on_fly: false,
+      endgame_climb: "",
+      endgame_climbed_side: false,
+      endgame_climbed_center: false,
+      endgame_time_to_climb: 0,
       comments: "",
     };
 
     setInitialValues(newInitial);
+    clearDraft("Stand Scouting");
   };
 
   return (
@@ -733,7 +887,7 @@ export default function StandScouting() {
                   </div>
                   <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
-                  <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab /></div>
+                  <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab /></div>
                   <div className="tab-pane fade" id="comments-pane" role="tabpanel" aria-labelledby="comments-tab" tabIndex="0">
                     <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} />
