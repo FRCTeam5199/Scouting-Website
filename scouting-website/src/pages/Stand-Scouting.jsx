@@ -389,15 +389,106 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
             ))}
           </div>
         </div>
-
-        {/* Switch Sides intentionally omitted for Auton tab */}
       </div>
     </div>
   );
 }
 
-function TeleopTab() {
-  return <div className="p-3">Teleop fields go here.</div>;
+function TeleopTab({ formData, handleChange }) {
+  const updateFuel = (delta) => {
+    const current = Number(formData.fuel_scored || 0);
+    let next = current + delta;
+    if (next < 0) next = 0;
+    handleChange({ target: { name: "fuel_scored", value: next, type: "text" } });
+  };
+
+  const handleTeleopAccuracyChange = (e) => {
+    handleChange(e);
+  };
+
+  return (
+    <div className="teleop-tab">
+      <div className="form-section text-center mb-4">
+        <h2 className="mb-3">Fuel Scored</h2>
+        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
+          {formData.fuel_scored || 0}
+        </div>
+        {[1, 5, 10].map((step) => (
+          <div key={step} className="btn-group mb-3" role="group" aria-label={`adjust ${step}`}>
+            <button
+              type="button"
+              className="btn btn-danger btn-lg"
+              onClick={() => updateFuel(-step)}
+            >
+              -
+            </button>
+            <button type="button" className="btn btn-light btn-lg" disabled>
+              +{step}
+            </button>
+            <button
+              type="button"
+              className="btn btn-success btn-lg"
+              onClick={() => updateFuel(step)}
+            >
+              +
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Shot accuracy similar to auton */}
+      <div className="form-section mb-4">
+        <label htmlFor="teleop_shot_accuracy" className="form-label">
+          Shot Accuracy
+        </label>
+        <input
+          type="range"
+          className="form-range"
+          min="0"
+          max="100"
+          value={formData.teleop_shot_accuracy || 0}
+          id="teleop_shot_accuracy"
+          name="teleop_shot_accuracy"
+          onChange={handleTeleopAccuracyChange}
+        />
+        <div className="accuracy-display mt-2">
+          <span className="badge bg-primary">{formData.teleop_shot_accuracy || 0}%</span>
+        </div>
+      </div>
+
+      {/* checkboxes row */}
+      <div className="form-section mb-4">
+        <div className="row justify-content-center">
+          <div className="col-auto form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="teleop_turret"
+              name="teleop_turret"
+              checked={formData.teleop_turret || false}
+              onChange={(e) => handleChange(e)}
+            />
+            <label className="form-check-label" htmlFor="teleop_turret">
+              Turret
+            </label>
+          </div>
+          <div className="col-auto form-check">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="teleop_shoot_on_fly"
+              name="teleop_shoot_on_fly"
+              checked={formData.teleop_shoot_on_fly || false}
+              onChange={(e) => handleChange(e)}
+            />
+            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">
+              Shoot on the fly
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function EndgameTab() {
@@ -460,6 +551,10 @@ export default function StandScouting() {
     climb_type: "",
     shot_accuracy: 0,
     autonomous_paths_selected: [],
+    fuel_scored: 0,
+    teleop_shot_accuracy: 0,
+    teleop_turret: false,
+    teleop_shoot_on_fly: false,
     comments: "",
   });
 
@@ -496,6 +591,10 @@ export default function StandScouting() {
       "Can shoot Fuel outside of preloaded Fuel?": values.auton_shoot_other_fuel ? "Yes" : "No",
       "Shot Accuracy": `${values.shot_accuracy || 0}%`,
       "Auton Paths": selectedPaths.join(", "),
+      "Teleop Fuel Scored": values.fuel_scored || 0,
+      "Teleop Shot Accuracy": `${values.teleop_shot_accuracy || 0}%`,
+      "Turret": values.teleop_turret ? "Yes" : "No",
+      "Shoot on the fly": values.teleop_shoot_on_fly ? "Yes" : "No",
       submissionId: crypto.randomUUID(),
       sheet_name: "Stand Scouting",
     };
@@ -559,6 +658,10 @@ export default function StandScouting() {
       climb_type: "",
       shot_accuracy: 0,
       autonomous_paths_selected: [],
+      fuel_scored: 0,
+      teleop_shot_accuracy: 0,
+      teleop_turret: false,
+      teleop_shoot_on_fly: false,
       comments: "",
     };
 
@@ -629,7 +732,7 @@ export default function StandScouting() {
                     <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
                   </div>
                   <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
-                  <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab /></div>
+                  <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab /></div>
                   <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab /></div>
                   <div className="tab-pane fade" id="comments-pane" role="tabpanel" aria-labelledby="comments-tab" tabIndex="0">

@@ -12,6 +12,15 @@
   padding: 1rem;
 }
 
+/* enlarge buttons and form controls for readability */
+.btn {
+  font-size: 1.1rem;
+}
+
+.form-label {
+  font-size: 1.1rem;
+}
+
 /* form section (inputs) */
 .form-section {
   background-color: transparent; /* pre-game-tab already provides background */
@@ -141,13 +150,32 @@
 }
 
 /* Auton Tab Styles */
-.auton-tab {
+.auton-tab,
+.teleop-tab,
+.pre-game-tab,
+.extra-tab,
+.endgame-tab {
   width: 100%;
   background-color: #5e9bf7;
   padding: 1rem;
   border-radius: 0.25rem;
   border-left: 4px solid #5e9bf7;
-  font-size: 1.05rem; /* slightly larger for readability */
+  font-size: 1.1rem; /* slightly larger for readability across tabs */
+}
+
+/* teleop-specific adjustments */
+.teleop-tab h2 {
+  font-size: 2rem;
+}
+
+.teleop-tab .btn-group .btn {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.5rem;
+  padding: 0;
+  border-radius: 100rem;
+  border-width: 1.5px;
+  border-color: #323030;
 }
 
 /* Auton checkboxes section */
