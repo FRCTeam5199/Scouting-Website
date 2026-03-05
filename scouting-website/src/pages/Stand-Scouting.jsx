@@ -260,6 +260,19 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
           <div className="row mb-4">
             <div className="col-12">
               <div className="auton-checkboxes">
+                <div className="form-check form-check-lg mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    name="auton_has_auton"
+                    id="auton_has_auton"
+                    checked={formData.auton_has_auton || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_has_auton">
+                    Has Auton
+                  </label>
+                </div>
 
                 <div className="form-check form-check-lg mb-2">
                   <input
@@ -418,7 +431,7 @@ function TeleopTab({ formData, handleChange }) {
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.fuel_scored || 0}
         </div>
-        {[1, 5, 10].map((step) => (
+        {[1, 2, 3].map((step) => (
           <div key={`fuel-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust ${step}`}>
             <button
               type="button"
@@ -446,7 +459,7 @@ function TeleopTab({ formData, handleChange }) {
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.teleop_shuttled || 0}
         </div>
-        {[1, 5, 10].map((step) => (
+        {[1, 2, 3].map((step) => (
           <div key={`shuttle-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust shuttle ${step}`}>
             <button
               type="button"
@@ -950,7 +963,7 @@ export default function StandScouting() {
     scouter_name: "",
     scouter_team: "",
     scouted_team: "",
-    alliance: "Red Alliance",
+    alliance: "",
     match_number: "",
     starting_location: "",
     has_robot_auton: "No",
@@ -1041,13 +1054,6 @@ export default function StandScouting() {
 
     const selectedPaths = (values.autonomous_paths_selected || []).map((i) => pathLabelMap[i]).filter(Boolean);
 
-    function generateId() {
-      if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        return crypto.randomUUID();
-      }
-      return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    }
-    
     const submission = {
       "Scouter's Name": values.scouter_name || "",
       "Scouter's Team #": values.scouter_team || "",
@@ -1097,7 +1103,7 @@ export default function StandScouting() {
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
-      submissionId: generateId(),
+      submissionId: crypto.randomUUID(),
       sheet_name: "Stand Scouting",
     };
 

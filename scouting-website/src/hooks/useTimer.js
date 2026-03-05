@@ -1,56 +1,45 @@
 import { useState, useEffect, useRef } from "react";
 
+
 export default function useTimer(initialSeconds = 0) {
-  const [seconds, setSeconds] = useState(initialSeconds);
+  const [time, setTime] = useState(initialSeconds * 100);
   const [isRunning, setIsRunning] = useState(false);
-  const [centiseconds, setCentiseconds] = useState(0);
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (isRunning) {
-      // Clear any existing interval to prevent doubles in StrictMode
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      intervalRef.current = setInterval(() => {
-        setCentiseconds((prev) => {
-          if (prev + 1 >= 100) {
-            setSeconds((s) => s + 1);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 10);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    if (!isRunning) {
+      clearInterval(intervalRef.current);
+      return;
     }
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isRunning]);
+    intervalRef.current = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 10);
 
-  const toggle = () => setIsRunning(!isRunning);
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, [isRunning]); // ← DO NOT REMOVE BRACKETS
+
+  const toggle = () => setIsRunning((prev) => !prev);
+
   const reset = () => {
-    setSeconds(0);
-    setCentiseconds(0);
+    setTime(0);
     setIsRunning(false);
   };
 
-  // Format seconds to MM:SS.CS (centiseconds)
-  const formatTime = (secs, cs) => {
-    const mins = Math.floor(secs / 60);
-    const secsRemainder = secs % 60;
-    const csRemainder = cs || 0;
+  const seconds = Math.floor(time / 100);
+  const centiseconds = time % 100;
+
+  const formatTime = () => {
+    const mins = Math.floor(seconds / 60);
+    const secsRemainder = seconds % 60;
+
     return `${mins.toString().padStart(2, "0")}:${secsRemainder
       .toString()
-      .padStart(2, "0")}.${csRemainder.toString().padStart(2, "0")}`;
+      .padStart(2, "0")}.${centiseconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return {
@@ -59,6 +48,6 @@ export default function useTimer(initialSeconds = 0) {
     isRunning,
     toggle,
     reset,
-    formatTime: () => formatTime(seconds, centiseconds),
+    formatTime,
   };
 }

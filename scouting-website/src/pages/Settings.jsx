@@ -87,7 +87,6 @@ function Settings() {
     initialValues,
     validate,
     onSubmit,
-    storageKey: "settingsForm", // persist settings draft separately
   });
 
   return (
