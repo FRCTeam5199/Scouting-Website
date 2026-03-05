@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-
-
 export default function useForm({
   initialValues = {},
   validate = () => ({}),
@@ -138,7 +136,7 @@ export default function useForm({
     return () => clearTimeout(timeout);
   }, [/* intentionally not depending on formData to avoid tight loop */]);
 
-  
+
   return {
     formData,
     errors,

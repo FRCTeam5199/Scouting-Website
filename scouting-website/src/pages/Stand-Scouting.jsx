@@ -17,7 +17,7 @@ function validate(values) {
   return errors;
 }
 
-function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
+function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
@@ -132,7 +132,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">Starting Location <span className="text-danger">*</span></label>
 
-        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
+        <div className="field-image-container">
           <img src={fieldImage} alt="Field" className="field-image" />
 
           <div className="starting-location-overlay">
@@ -164,12 +164,6 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
           </div>
         </div>
 
-        <div className="mt-2 d-flex justify-content-center">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
-            Switch Sides
-          </button>
-        </div>
-
         {errors.starting_location && touched.starting_location && (
           <div className="invalid-feedback d-block mt-2">{errors.starting_location}</div>
         )}
@@ -178,7 +172,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
   );
 }
 
-function AutonTab({ formData, handleChange, rotated, setRotated }) {
+function AutonTab({ formData, handleChange }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
@@ -260,19 +254,6 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
           <div className="row mb-4">
             <div className="col-12">
               <div className="auton-checkboxes">
-                <div className="form-check form-check-lg mb-2">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="auton_has_auton"
-                    id="auton_has_auton"
-                    checked={formData.auton_has_auton || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_has_auton">
-                    Has Auton
-                  </label>
-                </div>
 
                 <div className="form-check form-check-lg mb-2">
                   <input
@@ -379,7 +360,7 @@ function AutonTab({ formData, handleChange, rotated, setRotated }) {
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">Autonomous Paths</label>
 
-        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
+        <div className="field-image-container">
           <img src={fieldImage} alt="Field" className="field-image" />
 
           <div className="autonomous-paths-overlay">
@@ -431,7 +412,7 @@ function TeleopTab({ formData, handleChange }) {
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.fuel_scored || 0}
         </div>
-        {[1, 2, 3].map((step) => (
+        {[1, 5, 10].map((step) => (
           <div key={`fuel-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust ${step}`}>
             <button
               type="button"
@@ -459,7 +440,7 @@ function TeleopTab({ formData, handleChange }) {
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.teleop_shuttled || 0}
         </div>
-        {[1, 2, 3].map((step) => (
+        {[1, 5, 10].map((step) => (
           <div key={`shuttle-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust shuttle ${step}`}>
             <button
               type="button"
@@ -552,11 +533,6 @@ function EndgameTab({ formData, handleChange }) {
     timer.reset();
     handleTimerChange(0);
   };
-
-  // Sync timer seconds to form data whenever seconds change
-  React.useEffect(() => {
-    handleTimerChange(timer.seconds);
-  }, [timer.seconds]);
 
   return (
     <div className="endgame-tab">
@@ -954,7 +930,6 @@ export default function StandScouting() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showValidationAlert, setShowValidationAlert] = useState(false);
-  const [rotated, setRotated] = useState(false);
 
   // Load draft on mount
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -963,7 +938,7 @@ export default function StandScouting() {
     scouter_name: "",
     scouter_team: "",
     scouted_team: "",
-    alliance: "",
+    alliance: "Red Alliance",
     match_number: "",
     starting_location: "",
     has_robot_auton: "No",
@@ -1012,34 +987,6 @@ export default function StandScouting() {
     comments: "",
   });
 
-  // Load draft from IndexedDB on mount
-  React.useEffect(() => {
-    const loadSavedDraft = async () => {
-      try {
-        const draft = await loadDraft("Stand Scouting");
-        if (draft && !draftLoaded) {
-          // Normalize string booleans from IndexedDB ("true"/"false") to actual booleans
-          const normalizeDraft = (obj) => {
-            const out = {};
-            Object.entries(obj).forEach(([k, v]) => {
-              if (v === "true") out[k] = true;
-              else if (v === "false") out[k] = false;
-              else out[k] = v;
-            });
-            return out;
-          };
-          setInitialValues(normalizeDraft(draft));
-          setDraftLoaded(true);
-        }
-      } catch (error) {
-        console.log("Failed to load draft:", error);
-      }
-    };
-    if (!draftLoaded) {
-      loadSavedDraft();
-    }
-  }, [draftLoaded]);
-
   const onSubmit = async (values) => {
     // Map internal form keys to spreadsheet column headers and formats
     // climbLabelMap removed - climb_type dropdown replaced by explicit checkboxes
@@ -1053,6 +1000,13 @@ export default function StandScouting() {
     ];
 
     const selectedPaths = (values.autonomous_paths_selected || []).map((i) => pathLabelMap[i]).filter(Boolean);
+
+    function generateId() {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
 
     const submission = {
       "Scouter's Name": values.scouter_name || "",
@@ -1103,7 +1057,7 @@ export default function StandScouting() {
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
-      submissionId: crypto.randomUUID(),
+      submissionId: generateId(),
       sheet_name: "Stand Scouting",
     };
 
@@ -1127,21 +1081,7 @@ export default function StandScouting() {
 
   const clearForm = () => {
     resetForm();
-    clearDraft("Stand Scouting").catch((error) => {
-      console.log("Failed to clear draft:", error);
-    });
   };
-
-  // Auto-save form data every 5 seconds
-  React.useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      saveDraft(formData, "Stand Scouting").catch((error) => {
-        console.log("Auto-save failed:", error);
-      });
-    }, 5000);
-
-    return () => clearInterval(autoSaveInterval);
-  }, [formData]);
 
   // wrapper submit that checks validation synchronously via validate(formData)
   const onFormSubmit = async (e) => {
@@ -1287,9 +1227,9 @@ export default function StandScouting() {
 
                 <div className="tab-content" id="scoutingTabContent">
                   <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
-                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} />
                   </div>
-                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
+                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab formData={formData} handleChange={handleChange} /></div>
