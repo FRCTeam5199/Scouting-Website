@@ -7,7 +7,7 @@ export default function useForm({
 }) {
 
     // Keep track of what is typed in the form
-    const [formData, setFormData] = useState(initialValues);
+    const [formData, setFormData] = useState(() => ({ ...initialValues }));
 
     // Track which fields have been touched and any errors (used for error validators)
     const [errors, setErrors] = useState({});
@@ -124,7 +124,7 @@ export default function useForm({
       inputs.forEach((input) => {
         const { name, value } = input;
 
-        if (name && value && formData[name] !== value) {
+        if (name && value && formData[name] !== "") {
           setFormData((prev) => ({
             ...prev,
             [name]: value,

@@ -301,42 +301,39 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
                     Can shoot Fuel other than preloaded Fuel
                   </label>
                 </div>
+
+                <div className="form-check form-check-lg">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="auton_climb_side"
+                    name="auton_climbed_side"
+                    checked={formData.auton_climbed_side || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_climb_side">
+                    Climbed on side of Tower
+                  </label>
+                </div>
+
+                <div className="form-check form-check-lg">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="auton_climb_center"
+                    name="auton_climbed_center"
+                    checked={formData.auton_climbed_center || false}
+                    onChange={(e) => handleChange(e)}
+                  />
+                  <label className="form-check-label" htmlFor="auton_climb_center">
+                    Climbed on center of Tower
+                  </label>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Auton climb location checkboxes */}
-        <div className="row mb-4 justify-content-center">
-          <div className="col-auto">
-            <div className="form-check form-check-lg mb-2">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="auton_climb_side"
-                name="auton_climbed_side"
-                checked={formData.auton_climbed_side || false}
-                onChange={(e) => handleChange(e)}
-              />
-              <label className="form-check-label" htmlFor="auton_climb_side">
-                Climbed on side of Tower
-              </label>
-            </div>
-            <div className="form-check form-check-lg">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="auton_climb_center"
-                name="auton_climbed_center"
-                checked={formData.auton_climbed_center || false}
-                onChange={(e) => handleChange(e)}
-              />
-              <label className="form-check-label" htmlFor="auton_climb_center">
-                Climbed on center of Tower
-              </label>
-            </div>
-          </div>
-        </div>
 
         {/* Shot Accuracy slider */}
         <div className="row mb-4">
@@ -990,6 +987,7 @@ export default function StandScouting() {
       comments: "",
     };
 
+
     const preserved = localStorage.getItem('standScoutingPreserved');
     if (preserved) {
       try {
@@ -1139,7 +1137,6 @@ export default function StandScouting() {
       match_number: nextMatch,
       starting_location: "",
       has_robot_auton: "No",
-      auton_has_auton: false,
       auton_shuttled: false,
       auton_climbed_side: false,
       auton_climbed_center: false,
