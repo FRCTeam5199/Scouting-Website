@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
 import useTimer from "../hooks/useTimer";
-import { saveOffline, sendToServer, saveDraft, loadDraft, clearDraft } from "../sync";
+import { saveOffline, sendToServer, clearDraft } from "../sync";
 import "../styles/StandScouting.css";
 
 // Validation function
@@ -213,7 +213,6 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
     });
   };
 
-  const handleClimbChange = (e) => handleChange(e);
   const handleAccuracyChange = (e) => handleChange(e);
 
   return (
@@ -938,59 +937,76 @@ export default function StandScouting() {
   const [showValidationAlert, setShowValidationAlert] = useState(false);
   const [rotated, setRotated] = useState(false);
 
-  // Load draft on mount
-  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [initialValues, setInitialValues] = useState(() => {
+    const defaultValues = {
+      scouter_name: "",
+      scouter_team: "",
+      scouted_team: "",
+      alliance: "Red Alliance",
+      match_number: "",
+      starting_location: "",
+      has_robot_auton: "No",
+      auton_shuttled: false,
+      auton_climbed_side: false,
+      auton_climbed_center: false,
+      auton_shoot_preloaded: false,
+      auton_shoot_other_fuel: false,
+      shot_accuracy: 0,
+      autonomous_paths_selected: [],
+      fuel_scored: 0,
+      teleop_shuttled: 0,
+      teleop_shot_accuracy: 0,
+      teleop_turret: false,
+      teleop_shoot_on_fly: false,
+      endgame_climb: "",
+      endgame_climbed_side: false,
+      endgame_climbed_center: false,
+      endgame_time_to_climb: 0,
+      // Extra tab
+      defense_rating: 3,
+      defense_chasing: false,
+      defense_pinning: false,
+      defense_penalties: 0,
+      drive_robot_speed: 3,
+      drive_intake_shooter_speed: 3,
+      drive_driver_skill: 3,
+      // Comments tab
+      no_show: false,
+      didnt_move: false,
+      broke: false,
+      penalties: false,
+      good_vs_defense: false,
+      bad_vs_defense: false,
+      jittery_drive: false,
+      good_vibes: false,
+      bad_vibes: false,
+      can_only_shoot_specific_spots: false,
+      can_shoot_stationary_anywhere: false,
+      can_shoot_moving: false,
+      can_shoot_moving_rotating: false,
+      serious_comments: "",
+      funny_comments: "",
+      rescout_request: "No",
+      comments: "",
+    };
 
-  const [initialValues, setInitialValues] = useState({
-    scouter_name: "",
-    scouter_team: "",
-    scouted_team: "",
-    alliance: "Red Alliance",
-    match_number: "",
-    starting_location: "",
-    has_robot_auton: "No",
-    auton_shuttled: false,
-    auton_climbed_side: false,
-    auton_climbed_center: false,
-    auton_shoot_preloaded: false,
-    auton_shoot_other_fuel: false,
-    shot_accuracy: 0,
-    autonomous_paths_selected: [],
-    fuel_scored: 0,
-    teleop_shuttled: 0,
-    teleop_shot_accuracy: 0,
-    teleop_turret: false,
-    teleop_shoot_on_fly: false,
-    endgame_climb: "",
-    endgame_climbed_side: false,
-    endgame_climbed_center: false,
-    endgame_time_to_climb: 0,
-    // Extra tab
-    defense_rating: 3,
-    defense_chasing: false,
-    defense_pinning: false,
-    defense_penalties: 0,
-    drive_robot_speed: 3,
-    drive_intake_shooter_speed: 3,
-    drive_driver_skill: 3,
-    // Comments tab
-    no_show: false,
-    didnt_move: false,
-    broke: false,
-    penalties: false,
-    good_vs_defense: false,
-    bad_vs_defense: false,
-    jittery_drive: false,
-    good_vibes: false,
-    bad_vibes: false,
-    can_only_shoot_specific_spots: false,
-    can_shoot_stationary_anywhere: false,
-    can_shoot_moving: false,
-    can_shoot_moving_rotating: false,
-    serious_comments: "",
-    funny_comments: "",
-    rescout_request: "No",
-    comments: "",
+    const preserved = localStorage.getItem('standScoutingPreserved');
+    if (preserved) {
+      try {
+        const parsed = JSON.parse(preserved);
+        return {
+          ...defaultValues,
+          scouter_name: parsed.scouter_name || defaultValues.scouter_name,
+          scouter_team: parsed.scouter_team || defaultValues.scouter_team,
+          alliance: parsed.alliance || defaultValues.alliance,
+          match_number: parsed.match_number || defaultValues.match_number,
+        };
+      } catch (e) {
+        console.error('Failed to parse preserved values', e);
+        return defaultValues;
+      }
+    }
+    return defaultValues;
   });
 
   const onSubmit = async (values) => {
@@ -1169,6 +1185,12 @@ export default function StandScouting() {
     };
 
     setInitialValues(newInitial);
+    localStorage.setItem('standScoutingPreserved', JSON.stringify({
+      scouter_name: preservedName,
+      scouter_team: preservedScouterTeam,
+      alliance: preservedAlliance,
+      match_number: nextMatch,
+    }));
     clearDraft("Stand Scouting");
   };
 
