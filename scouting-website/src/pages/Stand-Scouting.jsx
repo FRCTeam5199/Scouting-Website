@@ -17,7 +17,7 @@ function validate(values) {
   return errors;
 }
 
-function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
+function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
@@ -132,7 +132,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">Starting Location <span className="text-danger">*</span></label>
 
-        <div className="field-image-container">
+        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
 
           <div className="starting-location-overlay">
@@ -164,6 +164,12 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
           </div>
         </div>
 
+        <div className="mt-2 d-flex justify-content-center">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
+            Switch Sides
+          </button>
+        </div>
+
         {errors.starting_location && touched.starting_location && (
           <div className="invalid-feedback d-block mt-2">{errors.starting_location}</div>
         )}
@@ -172,7 +178,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur }) {
   );
 }
 
-function AutonTab({ formData, handleChange }) {
+function AutonTab({ formData, handleChange, rotated, setRotated}) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
@@ -360,7 +366,7 @@ function AutonTab({ formData, handleChange }) {
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">Autonomous Paths</label>
 
-        <div className="field-image-container">
+        <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
 
           <div className="autonomous-paths-overlay">
@@ -930,6 +936,7 @@ export default function StandScouting() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showValidationAlert, setShowValidationAlert] = useState(false);
+  const [rotated, setRotated] = useState(false);
 
   // Load draft on mount
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -942,7 +949,6 @@ export default function StandScouting() {
     match_number: "",
     starting_location: "",
     has_robot_auton: "No",
-    auton_has_auton: false,
     auton_shuttled: false,
     auton_climbed_side: false,
     auton_climbed_center: false,
@@ -1227,9 +1233,9 @@ export default function StandScouting() {
 
                 <div className="tab-content" id="scoutingTabContent">
                   <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
-                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} />
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
                   </div>
-                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} /></div>
+                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
                   <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab formData={formData} handleChange={handleChange} /></div>
                   <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab formData={formData} handleChange={handleChange} /></div>

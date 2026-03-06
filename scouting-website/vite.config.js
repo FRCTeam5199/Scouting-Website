@@ -12,7 +12,6 @@ export default defineConfig({
       includeAssets: [
         "icons/redAllianceField-2026.png",
         "icons/blueAllianceField-2026.png",
-        "favicon.ico"
       ],
 
       manifest: {
