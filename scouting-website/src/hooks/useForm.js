@@ -122,9 +122,16 @@ export default function useForm({
       );
 
       inputs.forEach((input) => {
-        const { name, value } = input;
+        const { name, value, type } = input;
+        const isCheckable = type === "checkbox" || type === "radio";
+        const isButtonLike = type === "button" || type === "submit" || type === "reset";
+        const currentValue = formData[name];
+        const isEmptyCurrentValue =
+          currentValue === undefined || currentValue === null || currentValue === "";
 
-        if (name && value && formData[name] !== "") {
+        if (isCheckable || isButtonLike) return;
+
+        if (name && value && isEmptyCurrentValue) {
           setFormData((prev) => ({
             ...prev,
             [name]: value,

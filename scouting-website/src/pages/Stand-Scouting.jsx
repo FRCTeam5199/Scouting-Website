@@ -29,6 +29,13 @@ function formatTimerCentiseconds(value) {
     .padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
 }
 
+function normalizeAlliance(alliance) {
+  if (alliance === "Red Alliance") return "Red";
+  if (alliance === "Blue Alliance") return "Blue";
+  if (alliance === "Red" || alliance === "Blue") return alliance;
+  return "Red";
+}
+
 function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
@@ -960,7 +967,7 @@ export default function StandScouting() {
       scouter_name: "",
       scouter_team: "",
       scouted_team: "",
-      alliance: "Red Alliance",
+      alliance: "Red",
       match_number: "",
       starting_location: "",
       has_robot_auton: "No",
@@ -1017,7 +1024,7 @@ export default function StandScouting() {
           ...defaultValues,
           scouter_name: parsed.scouter_name || defaultValues.scouter_name,
           scouter_team: parsed.scouter_team || defaultValues.scouter_team,
-          alliance: parsed.alliance || defaultValues.alliance,
+          alliance: normalizeAlliance(parsed.alliance),
           match_number: parsed.match_number || defaultValues.match_number,
         };
       } catch (e) {
@@ -1127,7 +1134,11 @@ export default function StandScouting() {
       try {
         const draft = await loadDraft("Stand Scouting");
         if (isMounted && draft) {
-          setInitialValues((prev) => ({ ...prev, ...draft }));
+          setInitialValues((prev) => ({
+            ...prev,
+            ...draft,
+            alliance: normalizeAlliance(draft.alliance ?? prev.alliance),
+          }));
         }
       } catch (error) {
         console.error("Failed to load stand scouting draft:", error);
@@ -1177,7 +1188,7 @@ export default function StandScouting() {
     // Preserve scouter fields and alliance, increment match if numeric
     const preservedName = formData.scouter_name || initialValues.scouter_name;
     const preservedScouterTeam = formData.scouter_team || initialValues.scouter_team;
-    const preservedAlliance = formData.alliance || initialValues.alliance;
+    const preservedAlliance = normalizeAlliance(formData.alliance || initialValues.alliance);
 
     let nextMatch = "";
     const rawMatch = String(formData.match_number || initialValues.match_number || "").trim();
