@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 
 
-export default function useTimer(initialSeconds = 0) {
-  const [time, setTime] = useState(initialSeconds * 100);
+export default function useTimer(initialCentiseconds = 0) {
+  const [time, setTime] = useState(initialCentiseconds);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (!isRunning) {
+      setTime(initialCentiseconds);
+    }
+  }, [initialCentiseconds, isRunning]);
 
   useEffect(() => {
     if (!isRunning) {
@@ -43,6 +49,7 @@ export default function useTimer(initialSeconds = 0) {
   };
 
   return {
+    time,
     seconds,
     centiseconds,
     isRunning,

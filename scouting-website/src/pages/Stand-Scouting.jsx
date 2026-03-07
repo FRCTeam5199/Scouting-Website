@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
 import useTimer from "../hooks/useTimer";
-import { saveOffline, sendToServer, clearDraft } from "../sync";
+import { saveDraft, loadDraft, saveOffline, sendToServer, clearDraft } from "../sync";
 import "../styles/StandScouting.css";
 
 // Validation function
@@ -15,6 +15,18 @@ function validate(values) {
   if (!values.match_number?.toString().trim()) errors.match_number = "Required";
   if (!values.starting_location?.toString().trim()) errors.starting_location = "Required";
   return errors;
+}
+
+function formatTimerCentiseconds(value) {
+  const totalCentiseconds = Math.max(0, Number(value) || 0);
+  const totalSeconds = Math.floor(totalCentiseconds / 100);
+  const centiseconds = totalCentiseconds % 100;
+  const mins = Math.floor(totalSeconds / 60);
+  const secsRemainder = totalSeconds % 60;
+
+  return `${mins.toString().padStart(2, "0")}:${secsRemainder
+    .toString()
+    .padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
 }
 
 function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
@@ -521,10 +533,10 @@ function TeleopTab({ formData, handleChange }) {
 }
 
 function EndgameTab({ formData, handleChange }) {
-  const timer = useTimer(formData.endgame_time_to_climb || 0);
+  const timer = useTimer(Number(formData.endgame_time_to_climb) || 0);
 
-  const handleTimerChange = (newSeconds) => {
-    handleChange({ target: { name: "endgame_time_to_climb", value: newSeconds, type: "text" } });
+  const handleTimerChange = (newCentiseconds) => {
+    handleChange({ target: { name: "endgame_time_to_climb", value: newCentiseconds, type: "text" } });
   };
 
   const handleToggleTimer = () => {
@@ -535,6 +547,14 @@ function EndgameTab({ formData, handleChange }) {
     timer.reset();
     handleTimerChange(0);
   };
+
+  useEffect(() => {
+    if (!timer.isRunning) return;
+    if ((Number(formData.endgame_time_to_climb) || 0) !== timer.time) {
+      handleTimerChange(timer.time);
+    }
+  }, [timer.time, timer.isRunning, formData.endgame_time_to_climb]);
+
 
   return (
     <div className="endgame-tab">
@@ -933,6 +953,7 @@ export default function StandScouting() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showValidationAlert, setShowValidationAlert] = useState(false);
   const [rotated, setRotated] = useState(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
 
   const [initialValues, setInitialValues] = useState(() => {
     const defaultValues = {
@@ -1051,7 +1072,7 @@ export default function StandScouting() {
       "Climb (Teleop)": values.endgame_climb || "None",
       "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
       "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
-      "Time to Climb": values.endgame_time_to_climb || 0,
+      "Time to Climb": formatTimerCentiseconds(values.endgame_time_to_climb),
       // Extra tab fields
       "Defense Rating": values.defense_rating || 0,
       "Chasing": values.defense_chasing ? "Yes" : "No",
@@ -1098,6 +1119,43 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadExistingDraft = async () => {
+      try {
+        const draft = await loadDraft("Stand Scouting");
+        if (isMounted && draft) {
+          setInitialValues((prev) => ({ ...prev, ...draft }));
+        }
+      } catch (error) {
+        console.error("Failed to load stand scouting draft:", error);
+      } finally {
+        if (isMounted) {
+          setIsDraftLoaded(true);
+        }
+      }
+    };
+
+    loadExistingDraft();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+
+    const timeout = setTimeout(() => {
+      saveDraft(formData, "Stand Scouting").catch((error) => {
+        console.error("Failed to save stand scouting draft:", error);
+      });
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [formData, isDraftLoaded]);
 
   const clearForm = () => {
     resetForm();
@@ -1244,7 +1302,7 @@ export default function StandScouting() {
                 {showValidationAlert && (
                   <div className="mt-3">
                     <div className="alert alert-danger d-flex align-items-center" role="alert">
-                      <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Warning:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+                      <svg className="bi flex-shrink-0 me-2" role="img" aria-label="Warning:"><use xlink:href="#exclamation-triangle-fill"/></svg>
                       <div>Not all required information has been filled out yet!</div>
                     </div>
                   </div>
