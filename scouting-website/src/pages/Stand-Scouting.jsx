@@ -1127,12 +1127,18 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
-  const latestFormDataRef = useRef(formData);
+  const latestDraftPayloadRef = useRef({
+    ...formData,
+    field_image_rotated: rotated,
+  });
   const isDraftLoadedRef = useRef(isDraftLoaded);
 
   useEffect(() => {
-    latestFormDataRef.current = formData;
-  }, [formData]);
+    latestDraftPayloadRef.current = {
+      ...formData,
+      field_image_rotated: rotated,
+    };
+  }, [formData, rotated]);
 
   useEffect(() => {
     isDraftLoadedRef.current = isDraftLoaded;
@@ -1153,11 +1159,23 @@ export default function StandScouting() {
 
         const draft = await loadDraft("Stand Scouting");
         if (isMounted && (draft || emergencyDraft)) {
-          setInitialValues((prev) => ({
-            ...prev,
+          const combinedDraft = {
             ...(draft || {}),
             ...(emergencyDraft || {}),
-            alliance: normalizeAlliance(emergencyDraft?.alliance ?? draft?.alliance ?? prev.alliance),
+          };
+          const {
+            field_image_rotated: savedRotated,
+            ...draftFormValues
+          } = combinedDraft;
+
+          if (typeof savedRotated === "boolean") {
+            setRotated(savedRotated);
+          }
+
+          setInitialValues((prev) => ({
+            ...prev,
+            ...draftFormValues,
+            alliance: normalizeAlliance(draftFormValues.alliance ?? prev.alliance),
           }));
         }
       } catch (error) {
@@ -1178,29 +1196,33 @@ export default function StandScouting() {
 
   useEffect(() => {
     if (!isDraftLoaded) return;
+    const draftPayload = {
+      ...formData,
+      field_image_rotated: rotated,
+    };
 
     localStorage.setItem(
       EMERGENCY_DRAFT_KEY,
       JSON.stringify({
         timestamp: Date.now(),
-        data: formData,
+        data: draftPayload,
       })
     );
 
     const timeout = setTimeout(() => {
-      saveDraft(formData, "Stand Scouting").catch((error) => {
+      saveDraft(draftPayload, "Stand Scouting").catch((error) => {
         console.error("Failed to save stand scouting draft:", error);
       });
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [formData, isDraftLoaded, EMERGENCY_DRAFT_KEY]);
+  }, [formData, rotated, isDraftLoaded, EMERGENCY_DRAFT_KEY]);
 
   useEffect(() => {
     const persistImmediately = () => {
       if (!isDraftLoadedRef.current) return;
 
-      const latest = latestFormDataRef.current;
+      const latest = latestDraftPayloadRef.current;
       localStorage.setItem(
         EMERGENCY_DRAFT_KEY,
         JSON.stringify({
