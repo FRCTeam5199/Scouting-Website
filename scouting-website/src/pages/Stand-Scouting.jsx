@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
 import useTimer from "../hooks/useTimer";
@@ -955,6 +955,7 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
 
 
 export default function StandScouting() {
+  const EMERGENCY_DRAFT_KEY = "standScoutingEmergencyDraft";
   const isOnline = useNetworkStatus();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -1126,18 +1127,37 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
+  const latestFormDataRef = useRef(formData);
+  const isDraftLoadedRef = useRef(isDraftLoaded);
+
+  useEffect(() => {
+    latestFormDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    isDraftLoadedRef.current = isDraftLoaded;
+  }, [isDraftLoaded]);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadExistingDraft = async () => {
       try {
+        let emergencyDraft = null;
+        try {
+          const raw = localStorage.getItem(EMERGENCY_DRAFT_KEY);
+          emergencyDraft = raw ? JSON.parse(raw)?.data || null : null;
+        } catch (parseError) {
+          console.error("Failed to parse emergency stand scouting draft:", parseError);
+        }
+
         const draft = await loadDraft("Stand Scouting");
-        if (isMounted && draft) {
+        if (isMounted && (draft || emergencyDraft)) {
           setInitialValues((prev) => ({
             ...prev,
-            ...draft,
-            alliance: normalizeAlliance(draft.alliance ?? prev.alliance),
+            ...(draft || {}),
+            ...(emergencyDraft || {}),
+            alliance: normalizeAlliance(emergencyDraft?.alliance ?? draft?.alliance ?? prev.alliance),
           }));
         }
       } catch (error) {
@@ -1159,6 +1179,14 @@ export default function StandScouting() {
   useEffect(() => {
     if (!isDraftLoaded) return;
 
+    localStorage.setItem(
+      EMERGENCY_DRAFT_KEY,
+      JSON.stringify({
+        timestamp: Date.now(),
+        data: formData,
+      })
+    );
+
     const timeout = setTimeout(() => {
       saveDraft(formData, "Stand Scouting").catch((error) => {
         console.error("Failed to save stand scouting draft:", error);
@@ -1166,7 +1194,42 @@ export default function StandScouting() {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [formData, isDraftLoaded]);
+  }, [formData, isDraftLoaded, EMERGENCY_DRAFT_KEY]);
+
+  useEffect(() => {
+    const persistImmediately = () => {
+      if (!isDraftLoadedRef.current) return;
+
+      const latest = latestFormDataRef.current;
+      localStorage.setItem(
+        EMERGENCY_DRAFT_KEY,
+        JSON.stringify({
+          timestamp: Date.now(),
+          data: latest,
+        })
+      );
+
+      saveDraft(latest, "Stand Scouting").catch((error) => {
+        console.error("Failed to persist stand scouting draft on page hide:", error);
+      });
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        persistImmediately();
+      }
+    };
+
+    window.addEventListener("beforeunload", persistImmediately);
+    window.addEventListener("pagehide", persistImmediately);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.removeEventListener("beforeunload", persistImmediately);
+      window.removeEventListener("pagehide", persistImmediately);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [EMERGENCY_DRAFT_KEY]);
 
   const clearForm = () => {
     resetForm();
@@ -1257,6 +1320,7 @@ export default function StandScouting() {
       alliance: preservedAlliance,
       match_number: nextMatch,
     }));
+    localStorage.removeItem(EMERGENCY_DRAFT_KEY);
     clearDraft("Stand Scouting");
   };
 

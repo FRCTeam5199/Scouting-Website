@@ -7,7 +7,7 @@ function Home() {
           
           <div className="text-center">
             <p><u>Important!!!</u></p>
-            <p>The website is functional even if the user goes offline while filling out the form. However, once the form is submitted, be sure to reconnect to Wi-Fi so that data can be sent to the google sheet for compilation. Additionally, avoid reloading the page, navigating to a different page, or closing the website while filling out the form as it will NOT automatically save forms in progress.</p>
+            <p>The website is functional even if the user goes offline while filling out the form. However, once the form is submitted, be sure to reconnect to Wi-Fi so that data can be sent to the google sheet for compilation.</p>
             
             <br />
             <br />
