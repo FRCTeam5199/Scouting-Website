@@ -233,6 +233,12 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
   };
 
   const handleAccuracyChange = (e) => handleChange(e);
+  const updateAutoFuel = (delta) => {
+    const current = Number(formData.auto_fuel_scored || 0);
+    let next = current + delta;
+    if (next < 0) next = 0;
+    handleChange({ target: { name: "auto_fuel_scored", value: next, type: "text" } });
+  };
 
   return (
     <div className="auton-tab">
@@ -355,6 +361,35 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
 
 
         {/* Shot Accuracy slider */}
+        <div className="form-section text-center mb-4 score-counter">
+          <h2 className="mb-3">Auto Fuel Scored</h2>
+          <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
+            {formData.auto_fuel_scored || 0}
+          </div>
+          {[1, 5, 10].map((step) => (
+            <div key={`auton-fuel-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust auto fuel by ${step}`}>
+              <button
+                type="button"
+                className="btn btn-danger btn-lg"
+                onClick={() => updateAutoFuel(-step)}
+              >
+                -
+              </button>
+              <button type="button" className="btn btn-light btn-lg" disabled>
+                +{step}
+              </button>
+              <button
+                type="button"
+                className="btn btn-success btn-lg"
+                onClick={() => updateAutoFuel(step)}
+              >
+                +
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Shot Accuracy slider */}
         <div className="row mb-4">
           <div className="col-12">
             <label htmlFor="shot_accuracy" className="form-label">
@@ -428,13 +463,13 @@ function TeleopTab({ formData, handleChange }) {
 
   return (
     <div className="teleop-tab">
-      <div className="form-section text-center mb-4">
+      <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-3">Fuel Scored</h2>
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.fuel_scored || 0}
         </div>
         {[1, 5, 10].map((step) => (
-          <div key={`fuel-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust ${step}`}>
+          <div key={`fuel-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust ${step}`}>
             <button
               type="button"
               className="btn btn-danger btn-lg"
@@ -456,13 +491,13 @@ function TeleopTab({ formData, handleChange }) {
         ))}
       </div>
 
-      <div className="form-section text-center mb-4">
+      <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-3">Fuel Shuttled</h2>
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
           {formData.teleop_shuttled || 0}
         </div>
         {[1, 5, 10].map((step) => (
-          <div key={`shuttle-${step}`} className="btn-group mb-3 d-block" role="group" aria-label={`adjust shuttle ${step}`}>
+          <div key={`shuttle-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust shuttle ${step}`}>
             <button
               type="button"
               className="btn btn-danger btn-lg"
@@ -785,7 +820,6 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
     { name: "can_only_shoot_specific_spots", label: "Can only shoot from specific spots" },
     { name: "can_shoot_stationary_anywhere", label: "Can shoot while stationary from any part of the field" },
     { name: "can_shoot_moving", label: "Can shoot while moving" },
-    { name: "can_shoot_moving_rotating", label: "Can shoot while moving and rotating the robot" },
   ];
 
   return (
@@ -977,6 +1011,7 @@ export default function StandScouting() {
       auton_climbed_center: false,
       auton_shoot_preloaded: false,
       auton_shoot_other_fuel: false,
+      auto_fuel_scored: 0,
       shot_accuracy: 0,
       autonomous_paths_selected: [],
       fuel_scored: 0,
@@ -1009,7 +1044,6 @@ export default function StandScouting() {
       can_only_shoot_specific_spots: false,
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
-      can_shoot_moving_rotating: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
@@ -1067,6 +1101,7 @@ export default function StandScouting() {
       "Has Shuttling Auton?": values.auton_shuttled ? "Yes" : "No",
       "Can shoot preload?": values.auton_shoot_preloaded ? "Yes" : "No",
       "Can shoot Fuel outside of preloaded Fuel?": values.auton_shoot_other_fuel ? "Yes" : "No",
+      "Auto Fuel Scored": values.auto_fuel_scored || 0,
       "Shot Accuracy (Auton)": `${values.shot_accuracy || 0}%`,
       "Auton Paths": selectedPaths.join(", "),
       "Auton Climb Side": values.auton_climbed_side ? "Yes" : "No",
@@ -1102,7 +1137,6 @@ export default function StandScouting() {
       "Can shoot from only specific spots": values.can_only_shoot_specific_spots ? "Yes" : "No",
       "Can shoot while stationary from any part of the field": values.can_shoot_stationary_anywhere ? "Yes" : "No",
       "Can shoot while moving": values.can_shoot_moving ? "Yes" : "No",
-      "Can shoot while moving and rotating the robot": values.can_shoot_moving_rotating ? "Yes" : "No",
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
@@ -1296,6 +1330,7 @@ export default function StandScouting() {
       auton_climbed_center: false,
       auton_shoot_preloaded: false,
       auton_shoot_other_fuel: false,
+      auto_fuel_scored: 0,
       shot_accuracy: 0,
       autonomous_paths_selected: [],
       fuel_scored: 0,
@@ -1328,7 +1363,6 @@ export default function StandScouting() {
       can_only_shoot_specific_spots: false,
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
-      can_shoot_moving_rotating: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",

@@ -16,6 +16,9 @@
 
 .form-check-label {
   font-size: 1.2rem;
+  display: block;
+  line-height: 1.25;
+  margin: 0;
 }
 
 .form-check-input {
@@ -40,7 +43,18 @@
 
 /* Global checkbox styling - applied to all checkboxes across all tabs */
 .form-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-left: 0;
   margin-bottom: 0.5rem;
+}
+
+.form-check .form-check-input {
+  float: none;
+  margin-left: 0;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
 }
 
 /* larger checkboxes for emphasis (e.g. auton section) */
@@ -206,7 +220,6 @@
   }
 }
 
-/* Auton Tab Styles */
 .auton-tab,
 .teleop-tab,
 .pre-game-tab,
@@ -220,12 +233,38 @@
   font-size: 1.1rem; /* slightly larger for readability across tabs */
 }
 
-/* teleop-specific adjustments */
-.teleop-tab h2 {
-  font-size: 2rem;
+/* Larger tap targets for grouped button controls */
+.pre-game-tab .btn-group .btn,
+.auton-tab .btn-group .btn,
+.teleop-tab .btn-group .btn,
+.endgame-tab .btn-group .btn,
+.extra-tab .btn-group .btn,
+.comments-tab .btn-group .btn {
+  min-height: 3.8rem;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-.teleop-tab .btn-group .btn {
+/* extra-specific adjustments */
+.extra-tab .btn-group .btn {
+  border-radius: 100rem;
+  border-width: 1.2px;
+  border-color: #323030;
+}
+
+/* counter button groups shared by Auto Fuel/Fuel Scored/Fuel Shuttled */
+.score-counter .btn-group {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.score-counter .btn-group .btn {
   width: 4.5rem;
   height: 4.5rem;
   font-size: 1.5rem;
@@ -233,6 +272,11 @@
   border-radius: 100rem;
   border-width: 1.5px;
   border-color: #323030;
+}
+
+/* teleop-specific adjustments */
+.teleop-tab h2 {
+  font-size: 2rem;
 }
 
 /* Auton checkboxes section */
@@ -244,7 +288,15 @@
 }
 
 .auton-checkboxes .form-check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.auton-checkboxes .form-check .form-check-input {
+  margin-top: 0.2rem;
 }
 
 .auton-checkboxes .form-check:last-child {
@@ -330,6 +382,39 @@
   background-color: #ffffff;
 }
 
+.form-range {
+  display: block;
+  width: min(100%, 30rem);
+  margin: 0.5rem auto 0;
+  height: 1.6rem;
+}
+
+.form-range::-webkit-slider-thumb {
+  width: 1.45rem;
+  height: 1.45rem;
+  margin-top: -0.45rem;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 0.75rem;
+  border-radius: 100rem;
+}
+
+.form-range::-moz-range-thumb {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.form-range::-moz-range-track {
+  height: 0.75rem;
+  border-radius: 100rem;
+}
+
+.form-range::-ms-thumb {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
 /* Keep starting-location buttons upright when rotated too */
 .field-image-container.rotated .starting-location-btn {
   transform: translate(-50%, -50%) rotate(-180deg);
@@ -345,6 +430,65 @@
 }
 
 @media (max-width: 576px) {
+  .form-check {
+    gap: 0.9rem;
+  }
+
+  .form-check-input {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .form-check-label {
+    font-size: 1.3rem;
+    line-height: 1.25;
+  }
+
+  .form-check-lg .form-check-input {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .pre-game-tab .btn-group .btn,
+  .auton-tab .btn-group .btn,
+  .teleop-tab .btn-group .btn,
+  .endgame-tab .btn-group .btn,
+  .extra-tab .btn-group .btn,
+  .comments-tab .btn-group .btn {
+    min-height: 4.4rem;
+    font-size: 1.35rem;
+  }
+
+  .score-counter .btn-group .btn {
+    width: 5rem;
+    height: 5rem;
+    font-size: 1.6rem;
+  }
+
+  .form-range {
+    width: min(100%, 24rem);
+    height: 2rem;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-top: -0.6rem;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 0.9rem;
+  }
+
+  .form-range::-moz-range-thumb {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .form-range::-moz-range-track {
+    height: 0.9rem;
+  }
+
   .checkmark-btn {
     width: 34px;
     height: 34px;
