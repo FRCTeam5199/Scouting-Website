@@ -39,6 +39,11 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
 
+        additionalManifestEntries: [
+          { url: '/icons/redAllianceField-2026.png', revision: '1' },
+          { url: '/icons/blueAllianceField-2026.png', revision: '1' },
+        ],
+
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === "image",
