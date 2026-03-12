@@ -5,7 +5,6 @@ import useTimer from "../hooks/useTimer";
 import { saveDraft, loadDraft, saveOffline, sendToServer, clearDraft } from "../sync";
 import "../styles/StandScouting.css";
 
-// Validation function
 function validate(values) {
   const errors = {};
   if (!values.scouter_name?.toString().trim()) errors.scouter_name = "Required";
@@ -23,10 +22,7 @@ function formatTimerCentiseconds(value) {
   const centiseconds = totalCentiseconds % 100;
   const mins = Math.floor(totalSeconds / 60);
   const secsRemainder = totalSeconds % 60;
-
-  return `${mins.toString().padStart(2, "0")}:${secsRemainder
-    .toString()
-    .padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
+  return `${mins.toString().padStart(2, "0")}:${secsRemainder.toString().padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
 }
 
 function normalizeAlliance(alliance) {
@@ -36,20 +32,73 @@ function normalizeAlliance(alliance) {
   return "Red";
 }
 
-function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated }) {
+const TAB_ORDER = ["pre-game", "auton", "teleop", "endgame", "extra", "comments"];
+const TAB_LABELS = {
+  "pre-game": "Pre-Game",
+  auton: "Auton",
+  teleop: "Teleop",
+  endgame: "Endgame",
+  extra: "Extra",
+  comments: "Comments",
+};
+
+function TabNavButtons({ currentTab, onNavigate }) {
+  const currentIndex = TAB_ORDER.indexOf(currentTab);
+  const prevTab = currentIndex > 0 ? TAB_ORDER[currentIndex - 1] : null;
+  const nextTab = currentIndex < TAB_ORDER.length - 1 ? TAB_ORDER[currentIndex + 1] : null;
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === TAB_ORDER.length - 1;
+
+  // First tab: align Next to the right
+  // Last tab: align Back to the left
+  // Middle tabs: space between
+  const justifyClass = isFirst
+    ? "justify-content-end"
+    : isLast
+    ? "justify-content-start"
+    : "justify-content-between";
+
+  return (
+    <div className={`d-flex ${justifyClass} mt-4 mb-2`}>
+      {!isFirst && (
+        <button
+          type="button"
+          className="btn btn-secondary btn-lg"
+          style={{ minWidth: "110px" }}
+          onClick={() => onNavigate(prevTab)}
+        >
+          ← {TAB_LABELS[prevTab]}
+        </button>
+      )}
+      {!isLast && (
+        <button
+          type="button"
+          className="btn btn-primary btn-lg"
+          style={{ minWidth: "110px" }}
+          onClick={() => onNavigate(nextTab)}
+        >
+          {TAB_LABELS[nextTab]} →
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated, onNavigate }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
     : "/icons/redAllianceField-2026.png";
 
   const handleStartingLocationClick = (index) => {
-    const value = String(index + 1);
-    handleChange({ target: { name: "starting_location", value, type: "text" } });
+    handleChange({ target: { name: "starting_location", value: String(index + 1), type: "text" } });
   };
 
   return (
     <div className="pre-game-tab">
       <div className="form-section mb-4">
+
+        {/* Row 1: Scouter Name + Scouter Team */}
         <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="scouter_name" className="form-label">
@@ -86,6 +135,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
           </div>
         </div>
 
+        {/* Row 2: Scouted Team + Match # */}
         <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="scouted_team" className="form-label">
@@ -104,31 +154,6 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
             <div className="invalid-feedback">{errors.scouted_team}</div>
           </div>
 
-          <div className="col-md-6 mb-3 text-center">
-            <label className="form-label d-block mb-2">
-              Alliance <span className="text-danger">*</span>
-            </label>
-            <div className="btn-group w-100" role="group" aria-label="Alliance selection">
-              <button
-                type="button"
-                className={`btn btn-lg text-white ${formData.alliance === "Red" ? "bg-danger" : "btn-outline-danger"}`}
-                onClick={() => handleChange({ target: { name: "alliance", value: "Red", type: "text" } })}
-              >
-                Red Alliance
-              </button>
-              <button
-                type="button"
-                className={`btn btn-lg text-white ${formData.alliance === "Blue" ? "bg-primary" : "btn-outline-primary"}`}
-                onClick={() => handleChange({ target: { name: "alliance", value: "Blue", type: "text" } })}
-              >
-                Blue Alliance
-              </button>
-            </div>
-            {errors.alliance && <div className="text-danger mt-1">{errors.alliance}</div>}
-          </div>
-        </div>
-
-        <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="match_number" className="form-label">
               Match # <span className="text-danger">*</span>
@@ -146,14 +171,44 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
             <div className="invalid-feedback">{errors.match_number}</div>
           </div>
         </div>
+
+        {/* Row 3: Alliance — centered below Match # */}
+        <div className="row">
+          <div className="col-12">
+            <div className="alliance-section">
+              <label className="form-label mb-2">
+                Alliance <span className="text-danger">*</span>
+              </label>
+              <div className="btn-group" role="group" aria-label="Alliance selection">
+                <button
+                  type="button"
+                  className={`btn btn-lg ${formData.alliance === "Red" ? "btn-danger text-white" : "btn-outline-danger"}`}
+                  onClick={() => handleChange({ target: { name: "alliance", value: "Red", type: "text" } })}
+                >
+                  Red Alliance
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-lg ${formData.alliance === "Blue" ? "btn-primary text-white" : "btn-outline-primary"}`}
+                  onClick={() => handleChange({ target: { name: "alliance", value: "Blue", type: "text" } })}
+                >
+                  Blue Alliance
+                </button>
+              </div>
+              {errors.alliance && <div className="text-danger mt-1">{errors.alliance}</div>}
+            </div>
+          </div>
+        </div>
+
       </div>
 
+      {/* Starting Location field image */}
       <div className="field-section text-center">
-        <label className="form-label d-block mb-2 title-with-image">Starting Location <span className="text-danger">*</span></label>
-
+        <label className="form-label d-block mb-2 title-with-image">
+          Starting Location <span className="text-danger">*</span>
+        </label>
         <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
-
           <div className="starting-location-overlay">
             {(() => {
               const baseLeft = 55;
@@ -166,13 +221,12 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
                   left = 100 - left;
                   computedTop = 100 - computedTop;
                 }
-                const style = { left: `${left}%`, top: `${computedTop}%` };
                 return (
                   <button
                     key={i}
                     type="button"
                     className={`starting-location-btn ${formData.starting_location === String(i + 1) ? "active" : ""}`}
-                    style={style}
+                    style={{ left: `${left}%`, top: `${computedTop}%` }}
                     onClick={() => handleStartingLocationClick(i)}
                     title={`Starting location ${i + 1}`}
                     aria-label={`Starting location ${i + 1}`}
@@ -182,22 +236,22 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
             })()}
           </div>
         </div>
-
         <div className="mt-2 d-flex justify-content-center">
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
             Switch Sides
           </button>
         </div>
-
         {errors.starting_location && touched.starting_location && (
           <div className="invalid-feedback d-block mt-2">{errors.starting_location}</div>
         )}
       </div>
+
+      <TabNavButtons currentTab="pre-game" onNavigate={onNavigate} />
     </div>
   );
 }
 
-function AutonTab({ formData, handleChange, rotated, setRotated}) {
+function AutonTab({ formData, handleChange, rotated, setRotated, onNavigate }) {
   const isBlueAlliance = formData.alliance === "Blue";
   const fieldImage = isBlueAlliance
     ? "/icons/blueAllianceField-2026.png"
@@ -205,228 +259,124 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
 
   const hasAuton = formData.has_robot_auton === "Yes";
 
-  // Base checkmark positions (relative coordinates). Order maps to labels below.
   const baseCheckmarkPositions = [
-    { x: 71, y: 20 }, // Shuttle-Right (top middle-right)
-    { x: 71, y: 80 }, // Shuttle-Left (bottom middle-right)
-    { x: 32, y: 53 }, // Tower (center)
-    { x: 28, y: 29 }, // Depot (left)
-    { x: 20, y: 87 }, // Chute (right)
+    { x: 71, y: 20 },
+    { x: 71, y: 80 },
+    { x: 32, y: 53 },
+    { x: 28, y: 29 },
+    { x: 20, y: 87 },
   ];
 
-  // Mirror positions for blue alliance to keep arrangement consistent
-  const checkmarkPositions = baseCheckmarkPositions.map((p) => {
-    if (isBlueAlliance) {
-      return { x: 100 - p.x, y: 100 - p.y };
-    }
-    return p;
-  });
+  const checkmarkPositions = baseCheckmarkPositions.map((p) =>
+    isBlueAlliance ? { x: 100 - p.x, y: 100 - p.y } : p
+  );
 
   const handleCheckmarkToggle = (index) => {
     const selected = formData.autonomous_paths_selected || [];
     const newSelected = selected.includes(index)
       ? selected.filter((i) => i !== index)
       : [...selected, index];
-    handleChange({
-      target: { name: "autonomous_paths_selected", value: newSelected, type: "text" },
-    });
+    handleChange({ target: { name: "autonomous_paths_selected", value: newSelected, type: "text" } });
   };
 
-  const handleAccuracyChange = (e) => handleChange(e);
   const updateAutoFuel = (delta) => {
-    const current = Number(formData.auto_fuel_scored || 0);
-    let next = current + delta;
-    if (next < 0) next = 0;
+    const next = Math.max(0, Number(formData.auto_fuel_scored || 0) + delta);
     handleChange({ target: { name: "auto_fuel_scored", value: next, type: "text" } });
   };
 
   return (
     <div className="auton-tab">
       <div className="form-section mb-4">
-        {/* Does the robot have an Auton? */}
+
+        {/* Has Auton */}
         <div className="row mb-4">
+        <div className="has-auton-button-group">
           <div className="col-12">
             <label className="form-label mb-2">Does the robot have an Auton?</label>
             <div className="btn-group w-100" role="group" aria-label="Auton yes/no">
-              <input
-                type="radio"
-                className="btn-check"
-                name="has_robot_auton"
-                id="auton_no"
-                value="No"
-                checked={formData.has_robot_auton === "No"}
-                onChange={handleChange}
-                autoComplete="off"
-              />
-              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_no">
-                No
-              </label>
+              <input type="radio" className="btn-check" name="has_robot_auton" id="auton_no" value="No"
+                checked={formData.has_robot_auton === "No"} onChange={handleChange} autoComplete="off" />
+              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_no">No</label>
 
-              <input
-                type="radio"
-                className="btn-check"
-                name="has_robot_auton"
-                id="auton_yes"
-                value="Yes"
-                checked={formData.has_robot_auton === "Yes"}
-                onChange={handleChange}
-                autoComplete="off"
-              />
-              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_yes">
-                Yes
-              </label>
+              <input type="radio" className="btn-check" name="has_robot_auton" id="auton_yes" value="Yes"
+                checked={formData.has_robot_auton === "Yes"} onChange={handleChange} autoComplete="off" />
+              <label className="btn btn-outline-primary flex-grow-1" htmlFor="auton_yes">Yes</label>
             </div>
           </div>
         </div>
+        </div>
 
-        {/* Collapse section for auton checkboxes */}
+        {/* Auton checkboxes — only shown when Has Auton = Yes */}
         {hasAuton && (
           <div className="row mb-4">
             <div className="col-12">
               <div className="auton-checkboxes">
-
-                <div className="form-check form-check-lg mb-2">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="auton_shuttled"
-                    id="auton_shuttled"
-                    checked={formData.auton_shuttled || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_shuttled">
-                    Shuttled during Auton
-                  </label>
-                </div>
-
-                <div className="form-check form-check-lg mb-2">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="auton_shoot_preloaded"
-                    id="auton_shoot_preloaded"
-                    checked={formData.auton_shoot_preloaded || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_shoot_preloaded">
-                    Can shoot preloaded Fuel
-                  </label>
-                </div>
-
-                <div className="form-check form-check-lg">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    name="auton_shoot_other_fuel"
-                    id="auton_shoot_other_fuel"
-                    checked={formData.auton_shoot_other_fuel || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_shoot_other_fuel">
-                    Can shoot Fuel other than preloaded Fuel
-                  </label>
-                </div>
-
-                <div className="form-check form-check-lg">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="auton_climb_side"
-                    name="auton_climbed_side"
-                    checked={formData.auton_climbed_side || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_climb_side">
-                    Climbed on side of Tower
-                  </label>
-                </div>
-
-                <div className="form-check form-check-lg">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="auton_climb_center"
-                    name="auton_climbed_center"
-                    checked={formData.auton_climbed_center || false}
-                    onChange={(e) => handleChange(e)}
-                  />
-                  <label className="form-check-label" htmlFor="auton_climb_center">
-                    Climbed on center of Tower
-                  </label>
-                </div>
+                {[
+                  { name: "auton_shuttled", id: "auton_shuttled", label: "Shuttled during Auton" },
+                  { name: "auton_shoot_preloaded", id: "auton_shoot_preloaded", label: "Can shoot preloaded Fuel" },
+                  { name: "auton_shoot_other_fuel", id: "auton_shoot_other_fuel", label: "Can shoot Fuel other than preloaded Fuel" },
+                  { name: "auton_climbed_side", id: "auton_climb_side", label: "Climbed on side of Tower" },
+                  { name: "auton_climbed_center", id: "auton_climb_center", label: "Climbed on center of Tower" },
+                ].map(({ name, id, label }) => (
+                  <div key={id} className="form-check form-check-lg mb-2">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id={id}
+                      name={name}
+                      checked={formData[name] || false}
+                      onChange={(e) => handleChange(e)}
+                    />
+                    <label className="form-check-label" htmlFor={id}>{label}</label>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-
-        {/* Shot Accuracy slider */}
+        {/* Auto Fuel Scored counter */}
         <div className="form-section text-center mb-4 score-counter">
           <h2 className="mb-3">Auto Fuel Scored</h2>
           <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
             {formData.auto_fuel_scored || 0}
           </div>
           {[1, 5, 10].map((step) => (
-            <div key={`auton-fuel-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust auto fuel by ${step}`}>
-              <button
-                type="button"
-                className="btn btn-danger btn-lg"
-                onClick={() => updateAutoFuel(-step)}
-              >
-                -
-              </button>
-              <button type="button" className="btn btn-light btn-lg" disabled>
-                +{step}
-              </button>
-              <button
-                type="button"
-                className="btn btn-success btn-lg"
-                onClick={() => updateAutoFuel(step)}
-              >
-                +
-              </button>
+            <div key={`auton-fuel-${step}`} className="btn-group mb-3" role="group">
+              <button type="button" className="btn btn-danger btn-lg" onClick={() => updateAutoFuel(-step)}>-</button>
+              <button type="button" className="btn btn-light btn-lg" disabled>+{step}</button>
+              <button type="button" className="btn btn-success btn-lg" onClick={() => updateAutoFuel(step)}>+</button>
             </div>
           ))}
         </div>
 
-        {/* Shot Accuracy slider */}
+        {/* Shot Accuracy */}
         <div className="row mb-4">
           <div className="col-12">
-            <label htmlFor="shot_accuracy" className="form-label">
-              Shot Accuracy
-            </label>
+            <label htmlFor="shot_accuracy" className="form-label">Shot Accuracy</label>
             <input
-              type="range"
-              className="form-range"
-              min="0"
-              max="100"
-              value={formData.shot_accuracy || 0}
-              id="shot_accuracy"
-              name="shot_accuracy"
-              onChange={handleAccuracyChange}
+              type="range" className="form-range" min="0" max="100"
+              value={formData.shot_accuracy || 0} id="shot_accuracy" name="shot_accuracy"
+              onChange={(e) => handleChange(e)}
             />
             <div className="accuracy-display mt-2">
-              <span className="badge bg-primary">{formData.shot_accuracy || 0}%</span>
+              <span className="badge bg-primary fs-6">{formData.shot_accuracy || 0}%</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Autonomous Paths Image */}
+      {/* Autonomous Paths */}
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">Autonomous Paths</label>
-
         <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
-
           <div className="autonomous-paths-overlay">
             {checkmarkPositions.map((pos, index) => (
               <button
                 key={index}
                 type="button"
-                className={`checkmark-btn ${
-                  (formData.autonomous_paths_selected || []).includes(index) ? "active" : ""
-                }`}
+                className={`checkmark-btn ${(formData.autonomous_paths_selected || []).includes(index) ? "active" : ""}`}
                 style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 onClick={() => handleCheckmarkToggle(index)}
                 title={`Autonomous Path ${index + 1}`}
@@ -438,156 +388,91 @@ function AutonTab({ formData, handleChange, rotated, setRotated}) {
           </div>
         </div>
       </div>
+
+      <TabNavButtons currentTab="auton" onNavigate={onNavigate} />
     </div>
   );
 }
 
-function TeleopTab({ formData, handleChange }) {
+function TeleopTab({ formData, handleChange, onNavigate }) {
   const updateFuel = (delta) => {
-    const current = Number(formData.fuel_scored || 0);
-    let next = current + delta;
-    if (next < 0) next = 0;
+    const next = Math.max(0, Number(formData.fuel_scored || 0) + delta);
     handleChange({ target: { name: "fuel_scored", value: next, type: "text" } });
   };
 
   const updateShuttles = (delta) => {
-    const current = Number(formData.teleop_shuttled || 0);
-    let next = current + delta;
-    if (next < 0) next = 0;
+    const next = Math.max(0, Number(formData.teleop_shuttled || 0) + delta);
     handleChange({ target: { name: "teleop_shuttled", value: next, type: "text" } });
-  };
-
-  const handleTeleopAccuracyChange = (e) => {
-    handleChange(e);
   };
 
   return (
     <div className="teleop-tab">
+
+      {/* Fuel Scored */}
       <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-3">Fuel Scored</h2>
-        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
-          {formData.fuel_scored || 0}
-        </div>
+        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>{formData.fuel_scored || 0}</div>
         {[1, 5, 10].map((step) => (
-          <div key={`fuel-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust ${step}`}>
-            <button
-              type="button"
-              className="btn btn-danger btn-lg"
-              onClick={() => updateFuel(-step)}
-            >
-              -
-            </button>
-            <button type="button" className="btn btn-light btn-lg" disabled>
-              +{step}
-            </button>
-            <button
-              type="button"
-              className="btn btn-success btn-lg"
-              onClick={() => updateFuel(step)}
-            >
-              +
-            </button>
+          <div key={`fuel-${step}`} className="btn-group mb-3" role="group">
+            <button type="button" className="btn btn-danger btn-lg" onClick={() => updateFuel(-step)}>-</button>
+            <button type="button" className="btn btn-light btn-lg" disabled>+{step}</button>
+            <button type="button" className="btn btn-success btn-lg" onClick={() => updateFuel(step)}>+</button>
           </div>
         ))}
       </div>
 
+      {/* Fuel Shuttled */}
       <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-3">Fuel Shuttled</h2>
-        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>
-          {formData.teleop_shuttled || 0}
-        </div>
+        <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>{formData.teleop_shuttled || 0}</div>
         {[1, 5, 10].map((step) => (
-          <div key={`shuttle-${step}`} className="btn-group mb-3" role="group" aria-label={`adjust shuttle ${step}`}>
-            <button
-              type="button"
-              className="btn btn-danger btn-lg"
-              onClick={() => updateShuttles(-step)}
-            >
-              -
-            </button>
-            <button type="button" className="btn btn-light btn-lg" disabled>
-              +{step}
-            </button>
-            <button
-              type="button"
-              className="btn btn-success btn-lg"
-              onClick={() => updateShuttles(step)}
-            >
-              +
-            </button>
+          <div key={`shuttle-${step}`} className="btn-group mb-3" role="group">
+            <button type="button" className="btn btn-danger btn-lg" onClick={() => updateShuttles(-step)}>-</button>
+            <button type="button" className="btn btn-light btn-lg" disabled>+{step}</button>
+            <button type="button" className="btn btn-success btn-lg" onClick={() => updateShuttles(step)}>+</button>
           </div>
         ))}
       </div>
 
-      {/* Shot accuracy similar to auton */}
+      {/* Shot Accuracy */}
       <div className="form-section mb-4">
-        <label htmlFor="teleop_shot_accuracy" className="form-label">
-          Shot Accuracy
-        </label>
+        <label htmlFor="teleop_shot_accuracy" className="form-label">Shot Accuracy</label>
         <input
-          type="range"
-          className="form-range"
-          min="0"
-          max="100"
-          value={formData.teleop_shot_accuracy || 0}
-          id="teleop_shot_accuracy"
-          name="teleop_shot_accuracy"
-          onChange={handleTeleopAccuracyChange}
+          type="range" className="form-range" min="0" max="100"
+          value={formData.teleop_shot_accuracy || 0} id="teleop_shot_accuracy" name="teleop_shot_accuracy"
+          onChange={(e) => handleChange(e)}
         />
         <div className="accuracy-display mt-2">
-          <span className="badge bg-primary">{formData.teleop_shot_accuracy || 0}%</span>
+          <span className="badge bg-primary fs-6">{formData.teleop_shot_accuracy || 0}%</span>
         </div>
       </div>
 
-      {/* checkboxes row */}
+      {/* Turret + Shoot on the fly */}
       <div className="form-section mb-4">
-        <div className="row justify-content-center">
-          <div className="col-auto form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="teleop_turret"
-              name="teleop_turret"
-              checked={formData.teleop_turret || false}
-              onChange={(e) => handleChange(e)}
-            />
-            <label className="form-check-label" htmlFor="teleop_turret">
-              Turret
-            </label>
+        <div className="d-flex flex-wrap gap-4 justify-content-center">
+          <div className="form-check form-check-lg">
+            <input className="form-check-input" type="checkbox" id="teleop_turret" name="teleop_turret"
+              checked={formData.teleop_turret || false} onChange={(e) => handleChange(e)} />
+            <label className="form-check-label" htmlFor="teleop_turret">Turret</label>
           </div>
-          <div className="col-auto form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="teleop_shoot_on_fly"
-              name="teleop_shoot_on_fly"
-              checked={formData.teleop_shoot_on_fly || false}
-              onChange={(e) => handleChange(e)}
-            />
-            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">
-              Shoot on the fly
-            </label>
+          <div className="form-check form-check-lg">
+            <input className="form-check-input" type="checkbox" id="teleop_shoot_on_fly" name="teleop_shoot_on_fly"
+              checked={formData.teleop_shoot_on_fly || false} onChange={(e) => handleChange(e)} />
+            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">Shoot on the fly</label>
           </div>
         </div>
       </div>
+
+      <TabNavButtons currentTab="teleop" onNavigate={onNavigate} />
     </div>
   );
 }
 
-function EndgameTab({ formData, handleChange }) {
+function EndgameTab({ formData, handleChange, onNavigate }) {
   const timer = useTimer(Number(formData.endgame_time_to_climb) || 0);
 
   const handleTimerChange = (newCentiseconds) => {
     handleChange({ target: { name: "endgame_time_to_climb", value: newCentiseconds, type: "text" } });
-  };
-
-  const handleToggleTimer = () => {
-    timer.toggle();
-  };
-
-  const handleResetTimer = () => {
-    timer.reset();
-    handleTimerChange(0);
   };
 
   useEffect(() => {
@@ -597,100 +482,80 @@ function EndgameTab({ formData, handleChange }) {
     }
   }, [timer.time, timer.isRunning, formData.endgame_time_to_climb]);
 
-
   return (
     <div className="endgame-tab">
       <div className="row">
-        {/* Left side: Checkboxes for climb locations */}
-        <div className="col-md-6 mb-4">
-          <label className="form-label d-block mb-3">Climb Location</label>
-          <div className="form-check mb-2">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="climb_side"
-              name="endgame_climbed_side"
-              checked={formData.endgame_climbed_side || false}
-              onChange={(e) => handleChange(e)}
-            />
-            <label className="form-check-label" htmlFor="climb_side">
-              Climbed on side of Tower
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="climb_center"
-              name="endgame_climbed_center"
-              checked={formData.endgame_climbed_center || false}
-              onChange={(e) => handleChange(e)}
-            />
-            <label className="form-check-label" htmlFor="climb_center">
-              Climbed on center of Tower
-            </label>
-          </div>
-        </div>
 
-        {/* Right side: Climb radio */}
+        {/* Climb button group */}
         <div className="col-md-6 mb-4">
           <label className="form-label d-block mb-3">Climb</label>
-          <div className="btn-group w-100 d-flex climb-button-group" role="group" aria-label="Climb level">
-            {["", "L1", "L2", "L3", "Failed Climb"].map((value) => (
-              <div key={value} style={{ flex: 1 }}>
+          <div className="climb-button-group">
+            {[
+              { value: "", label: "None" },
+              { value: "L1", label: "L1" },
+              { value: "L2", label: "L2" },
+              { value: "L3", label: "L3" },
+              { value: "Failed Climb", label: "Failed" },
+            ].map(({ value, label }) => (
+              <div key={value || "none"} style={{ flex: "1 1 0", minWidth: 0 }}>
                 <input
-                  type="radio"
-                  className="btn-check"
-                  name="endgame_climb"
-                  id={`climb_${value || "none"}`}
-                  value={value}
+                  type="radio" className="btn-check" name="endgame_climb"
+                  id={`climb_${value || "none"}`} value={value}
                   checked={formData.endgame_climb === value}
-                  onChange={(e) => handleChange(e)}
-                  autoComplete="off"
+                  onChange={(e) => handleChange(e)} autoComplete="off"
                 />
-                <label className="btn btn-outline-primary w-100 climb-button" htmlFor={`climb_${value || "none"}`}>
-                  {value || "None"}
+                <label className="btn btn-outline-primary w-100" htmlFor={`climb_${value || "none"}`}>
+                  {label}
                 </label>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Climb Location checkboxes */}
+      <div className="col-md-6 mb-4 order-2 order-md-1 climb-location-col">
+        <label className="form-label d-block mb-3">Climb Location</label>
+        <div className="form-check justify-content-md-end mb-2">
+          <input className="form-check-input" type="checkbox" id="climb_side" name="endgame_climbed_side"
+            checked={formData.endgame_climbed_side || false} onChange={(e) => handleChange(e)} />
+          <label className="form-check-label" htmlFor="climb_side">Climbed on side of Tower</label>
+        </div>
+        <div className="form-check justify-content-md-end">
+          <input className="form-check-input" type="checkbox" id="climb_center" name="endgame_climbed_center"
+            checked={formData.endgame_climbed_center || false} onChange={(e) => handleChange(e)} />
+          <label className="form-check-label" htmlFor="climb_center">Climbed on center of Tower</label>
+        </div>
+      </div>
       </div>
 
-      {/* Timer section */}
+      {/* Timer */}
       <div className="form-section mb-4 text-center">
         <label className="form-label d-block mb-3">Time to climb from Tower Base</label>
         <div className="display-1 mb-3" style={{ fontSize: "2.5rem", fontFamily: "monospace" }}>
           {timer.formatTime()}
         </div>
         <div className="d-flex gap-2 justify-content-center mb-3">
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={handleResetTimer}
-            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}
-          >
+          <button type="button" className="btn btn-danger"
+            onClick={() => { timer.reset(); handleTimerChange(0); }}
+            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>
             Reset
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleToggleTimer}
-            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}
-          >
+          <button type="button" className="btn btn-primary"
+            onClick={() => timer.toggle()}
+            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>
             {timer.isRunning ? "Stop Timer" : "Toggle Timer"}
           </button>
         </div>
       </div>
+
+      <TabNavButtons currentTab="endgame" onNavigate={onNavigate} />
     </div>
   );
 }
 
-function ExtraTab({ formData, handleChange }) {
+function ExtraTab({ formData, handleChange, onNavigate }) {
   const updatePenalties = (delta) => {
-    const current = Number(formData.defense_penalties || 0);
-    let next = current + delta;
-    if (next < 0) next = 0;
+    const next = Math.max(0, Number(formData.defense_penalties || 0) + delta);
     handleChange({ target: { name: "defense_penalties", value: next, type: "text" } });
   };
 
@@ -699,81 +564,49 @@ function ExtraTab({ formData, handleChange }) {
       <div className="form-section mb-4">
         <h3 className="mb-3">Defense</h3>
         <div className="row">
-          <div className="col-md-4">
-            <label htmlFor="defense_rating" className="form-label">
-              Rating
-            </label>
+
+          {/* Defense Rating */}
+          <div className="col-md-4 mb-3">
+            <label htmlFor="defense_rating" className="form-label">Rating</label>
             <input
-              type="range"
-              className="form-range"
-              min="1"
-              max="5"
-              value={formData.defense_rating || 1}
-              id="defense_rating"
-              name="defense_rating"
+              type="range" className="form-range" min="1" max="5"
+              value={formData.defense_rating || 1} id="defense_rating" name="defense_rating"
               onChange={handleChange}
             />
             <div className="text-center mt-1">
-              <span className="badge bg-secondary">{formData.defense_rating || 1}</span>
+              <span className="badge bg-secondary fs-6">{formData.defense_rating || 1}</span>
             </div>
           </div>
 
-          <div className="col-md-4">
-            <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="defense_chasing"
-                name="defense_chasing"
-                checked={formData.defense_chasing || false}
-                onChange={(e) => handleChange(e)}
-              />
-              <label className="form-check-label" htmlFor="defense_chasing">
-                Chasing
-              </label>
+          {/* Chasing + Pinning */}
+          <div className="col-md-4 mb-3">
+            <div className="form-check mb-2">
+              <input className="form-check-input" type="checkbox" id="defense_chasing" name="defense_chasing"
+                checked={formData.defense_chasing || false} onChange={(e) => handleChange(e)} />
+              <label className="form-check-label" htmlFor="defense_chasing">Chasing</label>
             </div>
             <div className="form-check">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="defense_pinning"
-                name="defense_pinning"
-                checked={formData.defense_pinning || false}
-                onChange={(e) => handleChange(e)}
-              />
-              <label className="form-check-label" htmlFor="defense_pinning">
-                Pinning
-              </label>
+              <input className="form-check-input" type="checkbox" id="defense_pinning" name="defense_pinning"
+                checked={formData.defense_pinning || false} onChange={(e) => handleChange(e)} />
+              <label className="form-check-label" htmlFor="defense_pinning">Pinning</label>
             </div>
           </div>
-        </div>
 
-        <div className="row mt-4">
-          <div className="col-md-4 penalties-section">
+          {/* Penalties */}
+          <div className="col-md-4 mb-3 penalties-section">
             <label className="form-label d-block mb-2">Penalties</label>
-            <div className="btn-group mb-2" role="group" aria-label="penalty 1">
-              <button
-                type="button"
-                className="btn btn-danger btn-lg"
-                onClick={() => updatePenalties(-1)}
-              >
-                -
-              </button>
-              <button type="button" className="btn btn-light btn-lg" disabled>
+            <div className="btn-group" role="group">
+              <button type="button" className="btn btn-danger btn-lg" onClick={() => updatePenalties(-1)}>-</button>
+              <button type="button" className="btn btn-light btn-lg" disabled style={{ minWidth: "3rem" }}>
                 {formData.defense_penalties || 0}
               </button>
-              <button
-                type="button"
-                className="btn btn-success btn-lg"
-                onClick={() => updatePenalties(1)}
-              >
-                +
-              </button>
+              <button type="button" className="btn btn-success btn-lg" onClick={() => updatePenalties(1)}>+</button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Drive */}
       <div className="form-section">
         <h3 className="mb-3">Drive</h3>
         {[
@@ -782,34 +615,30 @@ function ExtraTab({ formData, handleChange }) {
           { label: "Driver Skill", name: "drive_driver_skill" },
         ].map(({ label, name }) => (
           <div key={name} className="mb-3">
-            <label htmlFor={name} className="form-label">
-              {label}
-            </label>
+            <label htmlFor={name} className="form-label">{label}</label>
             <input
-              type="range"
-              className="form-range"
-              min="1"
-              max="5"
-              value={formData[name] || 1}
-              id={name}
-              name={name}
+              type="range" className="form-range" min="1" max="5"
+              value={formData[name] || 1} id={name} name={name}
               onChange={handleChange}
             />
             <div className="text-center mt-1">
-              <span className="badge bg-secondary">{formData[name] || 1}</span>
+              <span className="badge bg-secondary fs-6">{formData[name] || 1}</span>
             </div>
           </div>
         ))}
       </div>
+
+      <TabNavButtons currentTab="extra" onNavigate={onNavigate} />
     </div>
   );
 }
 
-function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClearForm }) {
+function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClearForm, onNavigate }) {
   const [showClearModal, setShowClearModal] = useState(false);
+
   const checkboxes = [
     { name: "no_show", label: "No show" },
-    { name: "didnt_move", label: "Didn’t move" },
+    { name: "didnt_move", label: "Didn't move" },
     { name: "broke", label: "Broke" },
     { name: "penalties", label: "Penalties" },
     { name: "good_vs_defense", label: "Good vs. Defense" },
@@ -820,100 +649,56 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
     { name: "can_only_shoot_specific_spots", label: "Can only shoot from specific spots" },
     { name: "can_shoot_stationary_anywhere", label: "Can shoot while stationary from any part of the field" },
     { name: "can_shoot_moving", label: "Can shoot while moving" },
+    { name: "long_lineup_time", label: "Long line-up time to shoot Fuel" },
   ];
 
   return (
     <div className="p-3 comments-tab">
 
       <div className="row g-3 mb-4">
-        {checkboxes.map((cb, i) => (
+        {checkboxes.map((cb) => (
           <div key={cb.name} className="col-6">
-            <div className="form-check">
+            <div className="form-check form-check-lg">
               <input
-                className="form-check-input"
-                type="checkbox"
-                id={cb.name}
-                name={cb.name}
+                className="form-check-input" type="checkbox"
+                id={cb.name} name={cb.name}
                 checked={formData[cb.name] || false}
                 onChange={(e) => handleChange(e)}
               />
-              <label className="form-check-label" htmlFor={cb.name}>
-                {cb.label}
-              </label>
+              <label className="form-check-label" htmlFor={cb.name}>{cb.label}</label>
             </div>
           </div>
         ))}
       </div>
 
       <div className="mb-3">
-        <label htmlFor="serious_comments" className="form-label">
-          Serious Comments
-        </label>
-        <textarea
-          id="serious_comments"
-          name="serious_comments"
-          value={formData.serious_comments}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className="form-control"
-          rows={3}
-        ></textarea>
+        <label htmlFor="serious_comments" className="form-label">Serious Comments</label>
+        <textarea id="serious_comments" name="serious_comments" value={formData.serious_comments}
+          onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3} />
       </div>
 
       <div className="mb-3">
-        <label htmlFor="funny_comments" className="form-label">
-          Funny Comments
-        </label>
-        <textarea
-          id="funny_comments"
-          name="funny_comments"
-          value={formData.funny_comments}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className="form-control"
-          rows={3}
-        ></textarea>
+        <label htmlFor="funny_comments" className="form-label">Funny Comments</label>
+        <textarea id="funny_comments" name="funny_comments" value={formData.funny_comments}
+          onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3} />
       </div>
 
+      {/* Rescout + Clear + Submit */}
       <div className="row g-3 align-items-end mt-4">
         <div className="col-md-2">
           <label className="form-label d-block mb-2">Rescout Request</label>
           <div className="btn-group w-100 rescout-button-group" role="group" aria-label="Rescout request">
-            <input
-              type="radio"
-              className="btn-check"
-              name="rescout_request"
-              id="rescout_no"
-              value="No"
-              checked={formData.rescout_request === "No"}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-            <label className="btn btn-outline-primary" htmlFor="rescout_no">
-              No
-            </label>
+            <input type="radio" className="btn-check" name="rescout_request" id="rescout_no" value="No"
+              checked={formData.rescout_request === "No"} onChange={handleChange} autoComplete="off" />
+            <label className="btn btn-outline-primary" htmlFor="rescout_no">No</label>
 
-            <input
-              type="radio"
-              className="btn-check"
-              name="rescout_request"
-              id="rescout_yes"
-              value="Yes"
-              checked={formData.rescout_request === "Yes"}
-              onChange={handleChange}
-              autoComplete="off"
-            />
-            <label className="btn btn-outline-primary" htmlFor="rescout_yes">
-              Yes
-            </label>
+            <input type="radio" className="btn-check" name="rescout_request" id="rescout_yes" value="Yes"
+              checked={formData.rescout_request === "Yes"} onChange={handleChange} autoComplete="off" />
+            <label className="btn btn-outline-primary" htmlFor="rescout_yes">Yes</label>
           </div>
         </div>
         <div className="col-md-2">
-          <button
-            type="button"
-            className="btn btn-danger btn-lg w-100"
-            onClick={() => setShowClearModal(true)}
-          >
+          <button type="button" className="btn btn-danger btn-lg w-100" onClick={() => setShowClearModal(true)}>
             Clear Form
           </button>
         </div>
@@ -925,57 +710,30 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 Saving...
               </>
-            ) : (
-              "Submit Scouting Data"
-            )}
+            ) : "Submit Scouting Data"}
           </button>
         </div>
       </div>
+
+      <TabNavButtons currentTab="comments" onNavigate={onNavigate} />
+
       {showClearModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "2rem",
-              borderRadius: "0.5rem",
-              textAlign: "center",
-              minWidth: "400px",
-            }}
-          >
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: "white", padding: "2rem",
+            borderRadius: "0.5rem", textAlign: "center", minWidth: "300px",
+          }}>
             <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem", color: "#000" }}>
               Are you sure you want to clear this form?
             </p>
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setShowClearModal(false)}
-              >
-                No
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  onClearForm();
-                  setShowClearModal(false);
-                }}
-              >
-                Yes
-              </button>
+              <button type="button" className="btn btn-primary" onClick={() => setShowClearModal(false)}>No</button>
+              <button type="button" className="btn btn-secondary"
+                onClick={() => { onClearForm(); setShowClearModal(false); }}>Yes</button>
             </div>
           </div>
         </div>
@@ -983,10 +741,6 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
     </div>
   );
 }
-
-
-
-
 
 export default function StandScouting() {
   const EMERGENCY_DRAFT_KEY = "standScoutingEmergencyDraft";
@@ -996,6 +750,7 @@ export default function StandScouting() {
   const [showValidationAlert, setShowValidationAlert] = useState(false);
   const [rotated, setRotated] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState("pre-game");
 
   const [initialValues, setInitialValues] = useState(() => {
     const defaultValues = {
@@ -1023,7 +778,6 @@ export default function StandScouting() {
       endgame_climbed_side: false,
       endgame_climbed_center: false,
       endgame_time_to_climb: 0,
-      // Extra tab
       defense_rating: 3,
       defense_chasing: false,
       defense_pinning: false,
@@ -1031,7 +785,6 @@ export default function StandScouting() {
       drive_robot_speed: 3,
       drive_intake_shooter_speed: 3,
       drive_driver_skill: 3,
-      // Comments tab
       no_show: false,
       didnt_move: false,
       broke: false,
@@ -1044,14 +797,14 @@ export default function StandScouting() {
       can_only_shoot_specific_spots: false,
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
+      long_lineup_time: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
       comments: "",
     };
 
-
-    const preserved = localStorage.getItem('standScoutingPreserved');
+    const preserved = localStorage.getItem("standScoutingPreserved");
     if (preserved) {
       try {
         const parsed = JSON.parse(preserved);
@@ -1063,31 +816,27 @@ export default function StandScouting() {
           match_number: parsed.match_number || defaultValues.match_number,
         };
       } catch (e) {
-        console.error('Failed to parse preserved values', e);
         return defaultValues;
       }
     }
     return defaultValues;
   });
 
+  const navigateToTab = (tabId) => {
+    setActiveTab(tabId);
+    const tabEl = document.getElementById(`${tabId}-tab`);
+    if (tabEl) {
+      const bsTab = window.bootstrap?.Tab?.getOrCreateInstance(tabEl);
+      bsTab?.show();
+    }
+  };
+
   const onSubmit = async (values) => {
-    // Map internal form keys to spreadsheet column headers and formats
-    // climbLabelMap removed - climb_type dropdown replaced by explicit checkboxes
-
-    const pathLabelMap = [
-      "Shuttle-Right",
-      "Shuttle-Left",
-      "Tower",
-      "Depot",
-      "Chute",
-    ];
-
+    const pathLabelMap = ["Shuttle-Right", "Shuttle-Left", "Tower", "Depot", "Chute"];
     const selectedPaths = (values.autonomous_paths_selected || []).map((i) => pathLabelMap[i]).filter(Boolean);
 
     function generateId() {
-      if (typeof crypto !== "undefined" && crypto.randomUUID) {
-        return crypto.randomUUID();
-      }
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
       return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
@@ -1116,7 +865,6 @@ export default function StandScouting() {
       "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
       "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
       "Time to Climb": formatTimerCentiseconds(values.endgame_time_to_climb),
-      // Extra tab fields
       "Defense Rating": values.defense_rating || 0,
       "Chasing": values.defense_chasing ? "Yes" : "No",
       "Pinning": values.defense_pinning ? "Yes" : "No",
@@ -1124,7 +872,6 @@ export default function StandScouting() {
       "Robot Speed": values.drive_robot_speed || 0,
       "Intake-to-Shooter Speed": values.drive_intake_shooter_speed || 0,
       "Driver Skill": values.drive_driver_skill || 0,
-      // Comments tab fields
       "No show": values.no_show ? "Yes" : "No",
       "Did not move": values.didnt_move ? "Yes" : "No",
       "Broke": values.broke ? "Yes" : "No",
@@ -1137,6 +884,7 @@ export default function StandScouting() {
       "Can shoot from only specific spots": values.can_only_shoot_specific_spots ? "Yes" : "No",
       "Can shoot while stationary from any part of the field": values.can_shoot_stationary_anywhere ? "Yes" : "No",
       "Can shoot while moving": values.can_shoot_moving ? "Yes" : "No",
+      "Long line-up time to shoot Fuel": values.long_lineup_time ? "Yes" : "No",
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
@@ -1161,17 +909,12 @@ export default function StandScouting() {
     validate,
     onSubmit,
   });
-  const latestDraftPayloadRef = useRef({
-    ...formData,
-    field_image_rotated: rotated,
-  });
+
+  const latestDraftPayloadRef = useRef({ ...formData, field_image_rotated: rotated });
   const isDraftLoadedRef = useRef(isDraftLoaded);
 
   useEffect(() => {
-    latestDraftPayloadRef.current = {
-      ...formData,
-      field_image_rotated: rotated,
-    };
+    latestDraftPayloadRef.current = { ...formData, field_image_rotated: rotated };
   }, [formData, rotated]);
 
   useEffect(() => {
@@ -1180,7 +923,6 @@ export default function StandScouting() {
 
   useEffect(() => {
     let isMounted = true;
-
     const loadExistingDraft = async () => {
       try {
         let emergencyDraft = null;
@@ -1188,24 +930,13 @@ export default function StandScouting() {
           const raw = localStorage.getItem(EMERGENCY_DRAFT_KEY);
           emergencyDraft = raw ? JSON.parse(raw)?.data || null : null;
         } catch (parseError) {
-          console.error("Failed to parse emergency stand scouting draft:", parseError);
+          console.error("Failed to parse emergency draft:", parseError);
         }
-
         const draft = await loadDraft("Stand Scouting");
         if (isMounted && (draft || emergencyDraft)) {
-          const combinedDraft = {
-            ...(draft || {}),
-            ...(emergencyDraft || {}),
-          };
-          const {
-            field_image_rotated: savedRotated,
-            ...draftFormValues
-          } = combinedDraft;
-
-          if (typeof savedRotated === "boolean") {
-            setRotated(savedRotated);
-          }
-
+          const combinedDraft = { ...(draft || {}), ...(emergencyDraft || {}) };
+          const { field_image_rotated: savedRotated, ...draftFormValues } = combinedDraft;
+          if (typeof savedRotated === "boolean") setRotated(savedRotated);
           setInitialValues((prev) => ({
             ...prev,
             ...draftFormValues,
@@ -1213,85 +944,45 @@ export default function StandScouting() {
           }));
         }
       } catch (error) {
-        console.error("Failed to load stand scouting draft:", error);
+        console.error("Failed to load draft:", error);
       } finally {
-        if (isMounted) {
-          setIsDraftLoaded(true);
-        }
+        if (isMounted) setIsDraftLoaded(true);
       }
     };
-
     loadExistingDraft();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
     if (!isDraftLoaded) return;
-    const draftPayload = {
-      ...formData,
-      field_image_rotated: rotated,
-    };
-
-    localStorage.setItem(
-      EMERGENCY_DRAFT_KEY,
-      JSON.stringify({
-        timestamp: Date.now(),
-        data: draftPayload,
-      })
-    );
-
+    const draftPayload = { ...formData, field_image_rotated: rotated };
+    localStorage.setItem(EMERGENCY_DRAFT_KEY, JSON.stringify({ timestamp: Date.now(), data: draftPayload }));
     const timeout = setTimeout(() => {
-      saveDraft(draftPayload, "Stand Scouting").catch((error) => {
-        console.error("Failed to save stand scouting draft:", error);
-      });
+      saveDraft(draftPayload, "Stand Scouting").catch((e) => console.error("Failed to save draft:", e));
     }, 300);
-
     return () => clearTimeout(timeout);
-  }, [formData, rotated, isDraftLoaded, EMERGENCY_DRAFT_KEY]);
+  }, [formData, rotated, isDraftLoaded]);
 
   useEffect(() => {
     const persistImmediately = () => {
       if (!isDraftLoadedRef.current) return;
-
       const latest = latestDraftPayloadRef.current;
-      localStorage.setItem(
-        EMERGENCY_DRAFT_KEY,
-        JSON.stringify({
-          timestamp: Date.now(),
-          data: latest,
-        })
-      );
-
-      saveDraft(latest, "Stand Scouting").catch((error) => {
-        console.error("Failed to persist stand scouting draft on page hide:", error);
-      });
+      localStorage.setItem(EMERGENCY_DRAFT_KEY, JSON.stringify({ timestamp: Date.now(), data: latest }));
+      saveDraft(latest, "Stand Scouting").catch((e) => console.error("Failed to persist draft:", e));
     };
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        persistImmediately();
-      }
-    };
-
+    const handleVisibility = () => { if (document.visibilityState === "hidden") persistImmediately(); };
     window.addEventListener("beforeunload", persistImmediately);
     window.addEventListener("pagehide", persistImmediately);
     document.addEventListener("visibilitychange", handleVisibility);
-
     return () => {
       window.removeEventListener("beforeunload", persistImmediately);
       window.removeEventListener("pagehide", persistImmediately);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [EMERGENCY_DRAFT_KEY]);
+  }, []);
 
-  const clearForm = () => {
-    resetForm();
-  };
+  const clearForm = () => resetForm();
 
-  // wrapper submit that checks validation synchronously via validate(formData)
   const onFormSubmit = async (e) => {
     e.preventDefault();
     await handleSubmit(e);
@@ -1304,18 +995,12 @@ export default function StandScouting() {
 
     setShowValidationAlert(false);
 
-    // Preserve scouter fields and alliance, increment match if numeric
     const preservedName = formData.scouter_name || initialValues.scouter_name;
     const preservedScouterTeam = formData.scouter_team || initialValues.scouter_team;
     const preservedAlliance = normalizeAlliance(formData.alliance || initialValues.alliance);
-
-    let nextMatch = "";
     const rawMatch = String(formData.match_number || initialValues.match_number || "").trim();
-    if (rawMatch !== "" && !Number.isNaN(Number(rawMatch))) {
-      nextMatch = String(Number(rawMatch) + 1);
-    } else {
-      nextMatch = rawMatch;
-    }
+    const nextMatch = rawMatch !== "" && !Number.isNaN(Number(rawMatch))
+      ? String(Number(rawMatch) + 1) : rawMatch;
 
     const newInitial = {
       scouter_name: preservedName,
@@ -1342,7 +1027,6 @@ export default function StandScouting() {
       endgame_climbed_side: false,
       endgame_climbed_center: false,
       endgame_time_to_climb: 0,
-      // Extra tab
       defense_rating: 3,
       defense_chasing: false,
       defense_pinning: false,
@@ -1350,7 +1034,6 @@ export default function StandScouting() {
       drive_robot_speed: 3,
       drive_intake_shooter_speed: 3,
       drive_driver_skill: 3,
-      // Comments tab
       no_show: false,
       didnt_move: false,
       broke: false,
@@ -1363,6 +1046,7 @@ export default function StandScouting() {
       can_only_shoot_specific_spots: false,
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
+      long_lineup_time: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
@@ -1370,7 +1054,7 @@ export default function StandScouting() {
     };
 
     setInitialValues(newInitial);
-    localStorage.setItem('standScoutingPreserved', JSON.stringify({
+    localStorage.setItem("standScoutingPreserved", JSON.stringify({
       scouter_name: preservedName,
       scouter_team: preservedScouterTeam,
       alliance: preservedAlliance,
@@ -1382,13 +1066,6 @@ export default function StandScouting() {
 
   return (
     <div className="container mt-4">
-      {/* inline CSS to force nowrap tabs and ensure immediate rotation */}
-      <style>{`
-        .nav-tabs{display:flex !important; flex-wrap:nowrap !important; overflow-x:auto; -webkit-overflow-scrolling:touch}
-        .nav-tabs .nav-link{white-space:nowrap}
-        .field-image-container.rotated{transform:rotate(180deg)}
-      `}</style>
-
       <h1 className="mb-4 text-center">Stand Scouting</h1>
 
       <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center mb-4`} role="alert">
@@ -1400,7 +1077,7 @@ export default function StandScouting() {
         <div className="alert alert-success alert-dismissible fade show" role="alert">
           <i className="bi bi-check-circle-fill me-2"></i>
           {successMessage}
-          <button type="button" className="btn-close" onClick={() => setShowSuccess(false)} aria-label="Close"></button>
+          <button type="button" className="btn-close" onClick={() => setShowSuccess(false)} aria-label="Close" />
         </div>
       )}
 
@@ -1410,45 +1087,51 @@ export default function StandScouting() {
             <div className="card-body">
               <form onSubmit={onFormSubmit}>
                 <ul className="nav nav-tabs" id="scoutingTab" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link active" id="pre-game-tab" data-bs-toggle="tab" data-bs-target="#pre-game-pane" type="button" role="tab" aria-controls="pre-game-pane" aria-selected="true">Pre-Game</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link" id="auton-tab" data-bs-toggle="tab" data-bs-target="#auton-pane" type="button" role="tab" aria-controls="auton-pane" aria-selected="false">Auton</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link" id="teleop-tab" data-bs-toggle="tab" data-bs-target="#teleop-pane" type="button" role="tab" aria-controls="teleop-pane" aria-selected="false">Teleop</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link" id="endgame-tab" data-bs-toggle="tab" data-bs-target="#endgame-pane" type="button" role="tab" aria-controls="endgame-pane" aria-selected="false">Endgame</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link" id="extra-tab" data-bs-toggle="tab" data-bs-target="#extra-pane" type="button" role="tab" aria-controls="extra-pane" aria-selected="false">Extra</button>
-                  </li>
-                  <li className="nav-item" role="presentation">
-                    <button className="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-pane" type="button" role="tab" aria-controls="comments-pane" aria-selected="false">Comments</button>
-                  </li>
+                  {TAB_ORDER.map((tabId) => (
+                    <li key={tabId} className="nav-item" role="presentation">
+                      <button
+                        className={`nav-link ${activeTab === tabId ? "active" : ""}`}
+                        id={`${tabId}-tab`}
+                        data-bs-toggle="tab"
+                        data-bs-target={`#${tabId}-pane`}
+                        type="button"
+                        role="tab"
+                        aria-controls={`${tabId}-pane`}
+                        aria-selected={activeTab === tabId}
+                        onClick={() => setActiveTab(tabId)}
+                      >
+                        {TAB_LABELS[tabId]}
+                      </button>
+                    </li>
+                  ))}
                 </ul>
 
                 {showValidationAlert && (
                   <div className="mt-3">
                     <div className="alert alert-danger d-flex align-items-center" role="alert">
-                      <svg className="bi flex-shrink-0 me-2" role="img" aria-label="Warning:"><use xlink:href="#exclamation-triangle-fill"/></svg>
                       <div>Not all required information has been filled out yet!</div>
                     </div>
                   </div>
                 )}
 
                 <div className="tab-content" id="scoutingTabContent">
-                  <div className="tab-pane fade show active" id="pre-game-pane" role="tabpanel" aria-labelledby="pre-game-tab" tabIndex="0">
-                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} />
+                  <div className={`tab-pane fade ${activeTab === "pre-game" ? "show active" : ""}`} id="pre-game-pane" role="tabpanel" tabIndex="0">
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} onNavigate={navigateToTab} />
                   </div>
-                  <div className="tab-pane fade" id="auton-pane" role="tabpanel" aria-labelledby="auton-tab" tabIndex="0"><AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} /></div>
-                  <div className="tab-pane fade" id="teleop-pane" role="tabpanel" aria-labelledby="teleop-tab" tabIndex="0"><TeleopTab formData={formData} handleChange={handleChange} /></div>
-                  <div className="tab-pane fade" id="endgame-pane" role="tabpanel" aria-labelledby="endgame-tab" tabIndex="0"><EndgameTab formData={formData} handleChange={handleChange} /></div>
-                  <div className="tab-pane fade" id="extra-pane" role="tabpanel" aria-labelledby="extra-tab" tabIndex="0"><ExtraTab formData={formData} handleChange={handleChange} /></div>
-                  <div className="tab-pane fade" id="comments-pane" role="tabpanel" aria-labelledby="comments-tab" tabIndex="0">
-                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} onClearForm={clearForm} />
+                  <div className={`tab-pane fade ${activeTab === "auton" ? "show active" : ""}`} id="auton-pane" role="tabpanel" tabIndex="0">
+                    <AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} onNavigate={navigateToTab} />
+                  </div>
+                  <div className={`tab-pane fade ${activeTab === "teleop" ? "show active" : ""}`} id="teleop-pane" role="tabpanel" tabIndex="0">
+                    <TeleopTab formData={formData} handleChange={handleChange} onNavigate={navigateToTab} />
+                  </div>
+                  <div className={`tab-pane fade ${activeTab === "endgame" ? "show active" : ""}`} id="endgame-pane" role="tabpanel" tabIndex="0">
+                    <EndgameTab formData={formData} handleChange={handleChange} onNavigate={navigateToTab} />
+                  </div>
+                  <div className={`tab-pane fade ${activeTab === "extra" ? "show active" : ""}`} id="extra-pane" role="tabpanel" tabIndex="0">
+                    <ExtraTab formData={formData} handleChange={handleChange} onNavigate={navigateToTab} />
+                  </div>
+                  <div className={`tab-pane fade ${activeTab === "comments" ? "show active" : ""}`} id="comments-pane" role="tabpanel" tabIndex="0">
+                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} onClearForm={clearForm} onNavigate={navigateToTab} />
                   </div>
                 </div>
               </form>

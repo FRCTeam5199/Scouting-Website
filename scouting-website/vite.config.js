@@ -21,29 +21,15 @@ export default defineConfig({
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#000000",
-
         icons: [
-          {
-            src: "pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png"
-          },
-          {
-            src: "pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png"
-          }
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" }
         ]
       },
 
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-
-        additionalManifestEntries: [
-          { url: '/icons/redAllianceField-2026.png', revision: '1' },
-          { url: '/icons/blueAllianceField-2026.png', revision: '1' },
-        ],
-
+        navigateFallback: "/index.html",
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === "image",
@@ -52,9 +38,9 @@ export default defineConfig({
               cacheName: "image-cache",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              }
-            }
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
           },
           {
             urlPattern: ({ request }) =>
@@ -62,11 +48,11 @@ export default defineConfig({
               request.destination === "style",
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "static-cache"
-            }
-          }
-        ]
-      }
-    })
-  ]
+              cacheName: "static-cache",
+            },
+          },
+        ],
+      },
+    }),
+  ],
 });

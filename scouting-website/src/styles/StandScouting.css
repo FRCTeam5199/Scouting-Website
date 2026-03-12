@@ -1,3 +1,7 @@
+/* ==========================================================================
+   LAYOUT & TAB CONTAINERS
+   ========================================================================== */
+
 .pre-game-tab,
 .auton-tab,
 .teleop-tab,
@@ -5,190 +9,61 @@
 .extra-tab,
 .comments-tab {
   width: 100%;
-  /* blue background for all tabs */
   background-color: #5e9bf7;
   padding: 1rem;
   border-radius: 0.25rem;
   border-left: 4px solid #5e9bf7;
+  font-size: 1.1rem;
 }
 
-/* keep the single form card narrow and centered like Settings */
-
-.form-check-label {
-  font-size: 1.2rem;
-  display: block;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.form-check-input {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-
-/* keep the single form card narrow and centered like Settings */
 .card-body {
   padding: 1rem;
 }
 
-/* enlarge buttons and form controls for readability */
-.btn {
-  font-size: 1.1rem;
+.form-section {
+  background-color: transparent;
+  padding: 0.5rem 0;
 }
+
+.field-section {
+  margin-top: 1rem;
+}
+
+
+/* ==========================================================================
+   NAVIGATION TABS
+   ========================================================================== */
+
+.nav-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox — hide scrollbar but keep scrolling */
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari — hide scrollbar but keep scrolling */
+}
+
+.nav-tabs .nav-link {
+  white-space: nowrap;
+  font-size: 1.02rem;
+}
+
+
+/* ==========================================================================
+   FORM LABELS & CONTROLS
+   ========================================================================== */
 
 .form-label {
   font-size: 1.1rem;
 }
 
-/* Global checkbox styling - applied to all checkboxes across all tabs */
-.form-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding-left: 0;
-  margin-bottom: 0.5rem;
-}
-
-.form-check .form-check-input {
-  float: none;
-  margin-left: 0;
-  margin-top: 0.15rem;
-  flex-shrink: 0;
-}
-
-/* larger checkboxes for emphasis (e.g. auton section) */
-.form-check-lg .form-check-input {
-  width: 2rem;
-  height: 2rem;
-}
-
-.form-check-lg .form-check-label {
-  font-size: 1.4rem;
-}
-
-
-/* Climb button group - ensure equal heights */
-.climb-button-group .climb-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 3rem;
-}
-
-/* Rescout button group styling */
-.rescout-button-group .btn {
-  min-height: 2.5rem;
+.btn {
   font-size: 1.1rem;
 }
 
-/* add space between penalties and checkboxes above on small screens */
-.penalties-section {
-  margin-top: 2rem;
-}
-
-@media (max-width: 576px) {
-  .penalties-section {
-    margin-top: 2rem;
-  }
-}
-
-/* form section (inputs) */
-.form-section {
-  background-color: transparent; /* pre-game-tab already provides background */
-  padding: 0.5rem 0;
-}
-
-/* Field image container tightened for readability */
-.field-section {
-  margin-top: 1rem;
-}
-
-.field-image-container {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-  max-width: 520px; /* slightly smaller for readability */
-  margin: 0 auto;
-  border: 2px solid #dee2e6;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background-color: #f8f9fa;
-}
-
-/* immediate rotation (no transition) */
-.field-image-container.rotated {
-  transform: rotate(180deg);
-  transform-origin: center center;
-}
-
-/* image fills container */
-.field-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  background-color: #e9ecef;
-}
-
-/* overlay for starting location buttons */
-.starting-location-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* container doesn't block clicks; buttons will re-enable pointer events */
-}
-
-/* circular buttons positioned absolutely (numbers removed) */
-.starting-location-btn {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 2px solid #0d6efd;
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #0d6efd;
-  font-weight: bold;
-  cursor: pointer;
-  transform: translate(-50%, -50%);
-  z-index: 20;
-  pointer-events: auto;
-}
-
-/* hover and active visuals */
-.starting-location-btn:hover {
-  background-color: rgba(13, 110, 253, 0.08);
-  border-color: #0056b3;
-  color: #0056b3;
-}
-
-.starting-location-btn.active {
-  background-color: #0d6efd;
-  color: white;
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-}
-
-.starting-location-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.5);
-}
-
-/* ensure nav tabs stay in single row on small screens */
-.nav-tabs {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
-.nav-tabs .nav-link {
-  white-space: nowrap;
-}
-
-.nav-tabs .nav-link {
-  font-size: 1.02rem;
-}
-
-/* title that sits above the image and visually part of the form */
 .title-with-image {
   display: inline-block;
   background: transparent;
@@ -196,44 +71,153 @@
   font-weight: 600;
 }
 
-/* responsive adjustments */
-@media (max-width: 768px) {
-  .field-image-container {
-    max-width: 420px;
-  }
 
-  .starting-location-btn {
-    width: 38px;
-    height: 38px;
-  }
+/* ==========================================================================
+   CHECKBOXES
+   ========================================================================== */
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0;
+  margin-bottom: 0.75rem;
 }
 
-@media (max-width: 576px) {
-  .field-image-container {
-    max-width: 340px;
-  }
-
-  .starting-location-btn {
-    width: 34px;
-    height: 34px;
-    border-width: 1px;
-  }
-}
-
-.auton-tab,
-.teleop-tab,
-.pre-game-tab,
-.extra-tab,
-.endgame-tab, .comments-tab {
-  width: 100%;
-  background-color: #5e9bf7;
-  padding: 1rem;
+.form-check .form-check-input {
+  float: none;
+  flex-shrink: 0;
+  margin: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  cursor: pointer;
+  border: 2px solid #fff;
+  background-color: #fff;
   border-radius: 0.25rem;
-  border-left: 4px solid #5e9bf7;
-  font-size: 1.1rem; /* slightly larger for readability across tabs */
 }
 
-/* Larger tap targets for grouped button controls */
+.form-check .form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.form-check-label {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin: 0;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Large variant */
+.form-check-lg .form-check-input {
+  width: 2rem;
+  height: 2rem;
+}
+
+.form-check-lg .form-check-label {
+  font-size: 1.3rem;
+}
+
+/* Auton checkboxes subsection */
+.auton-checkboxes {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.auton-checkboxes .form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.auton-checkboxes .form-check:last-child {
+  margin-bottom: 0;
+}
+
+/* Comments checkboxes subsection */
+.comments-tab .form-check .form-check-input {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.comments-tab .form-check .form-check-label {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+/* Endgame climb location checkboxes */
+.endgame-tab .form-check .form-check-input {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+@media (min-width: 768px) {
+  .endgame-tab .climb-location-col {
+    padding-left: 10rem;
+  }
+}
+
+.endgame-tab .form-check .form-check-label {
+  font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   RANGE SLIDERS
+   ========================================================================== */
+
+.form-range {
+  display: block;
+  width: min(100%, 30rem);
+  margin: 0.5rem auto 0;
+  height: 2rem;
+  cursor: pointer;
+}
+
+.form-range::-webkit-slider-thumb {
+  width: 2rem;
+  height: 2rem;
+  margin-top: -0.65rem;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 0.75rem;
+  border-radius: 100rem;
+}
+
+.form-range::-moz-range-thumb {
+  width: 2rem;
+  height: 2rem;
+}
+
+.form-range::-moz-range-track {
+  height: 0.75rem;
+  border-radius: 100rem;
+}
+
+/* White range track inside Auton tab */
+.auton-tab .form-range {
+  background-color: #ffffff;
+}
+
+/* Badge below range sliders */
+.accuracy-display {
+  text-align: center;
+}
+
+.accuracy-display .badge {
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+}
+
+
+/* ==========================================================================
+   BUTTON GROUPS — GENERAL
+   ========================================================================== */
+
 .pre-game-tab .btn-group .btn,
 .auton-tab .btn-group .btn,
 .teleop-tab .btn-group .btn,
@@ -248,14 +232,21 @@
   text-align: center;
 }
 
-/* extra-specific adjustments */
-.extra-tab .btn-group .btn {
-  border-radius: 100rem;
-  border-width: 1.2px;
-  border-color: #323030;
+/* White background for ALL inactive outline buttons across every tab */
+
+.has-auton-button-group .btn-group .btn,
+.climb-button-group .btn,
+.comments-tab .btn-group .btn {
+  background-color: #ffffff;
+  color: #0d6efd;
+  border-color: #0d6efd;
 }
 
-/* counter button groups shared by Auto Fuel/Fuel Scored/Fuel Shuttled */
+
+/* ==========================================================================
+   BUTTON GROUPS — SCORE COUNTERS
+   ========================================================================== */
+
 .score-counter .btn-group {
   display: flex;
   width: fit-content;
@@ -274,36 +265,142 @@
   border-color: #323030;
 }
 
-/* teleop-specific adjustments */
+
+/* ==========================================================================
+   BUTTON GROUPS — SPECIFIC CONTROLS
+   ========================================================================== */
+
+/* Extra tab counter buttons */
+.extra-tab .btn-group .btn {
+  border-radius: 100rem;
+  border-width: 1.2px;
+  border-color: #323030;
+}
+
+/* Climb button group — equal size, wrapping layout */
+.climb-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.climb-button-group > div {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.climb-button-group .btn {
+  width: 100%;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.25rem;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rescout button group */
+.rescout-button-group .btn {
+  min-height: 2.5rem;
+  font-size: 1.1rem;
+}
+
+/* Teleop headings */
 .teleop-tab h2 {
   font-size: 2rem;
 }
 
-/* Auton checkboxes section */
-.auton-checkboxes {
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 1rem;
-  border-radius: 0.375rem;
+/* Penalties counter spacing */
+.penalties-section {
+  margin-top: 2rem;
+}
+
+/* Alliance button group centering */
+.alliance-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
   margin-top: 0.5rem;
 }
 
-.auton-checkboxes .form-check {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  column-gap: 0.75rem;
-  margin-bottom: 0.75rem;
+.alliance-section .btn-group {
+  width: 100%;
+  max-width: 400px;
 }
 
-.auton-checkboxes .form-check .form-check-input {
-  margin-top: 0.2rem;
+
+/* ==========================================================================
+   FIELD IMAGE & OVERLAYS
+   ========================================================================== */
+
+.field-image-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  border: 2px solid #dee2e6;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f8f9fa;
 }
 
-.auton-checkboxes .form-check:last-child {
-  margin-bottom: 0;
+.field-image-container.rotated {
+  transform: rotate(180deg);
+  transform-origin: center center;
 }
 
-/* Overlay for autonomous paths checkmarks */
+.field-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  background-color: #e9ecef;
+}
+
+/* Starting location overlay */
+.starting-location-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.starting-location-btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #0d6efd;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #0d6efd;
+  font-weight: bold;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.starting-location-btn:hover {
+  background-color: rgba(13, 110, 253, 0.08);
+  border-color: #0056b3;
+  color: #0056b3;
+}
+
+.starting-location-btn.active {
+  background-color: #0d6efd;
+  color: white;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+.starting-location-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.5);
+}
+
+/* Autonomous paths overlay */
 .autonomous-paths-overlay {
   position: absolute;
   top: 0;
@@ -313,7 +410,6 @@
   pointer-events: none;
 }
 
-/* Checkmark buttons positioned absolutely */
 .checkmark-btn {
   position: absolute;
   width: 44px;
@@ -334,12 +430,6 @@
   transition: all 0.2s ease;
 }
 
-/* When the field container is rotated, counter-rotate buttons so they remain upright */
-.field-image-container.rotated .checkmark-btn,
-.field-image-container.rotated .starting-location-btn {
-  transform: translate(-50%, -50%) rotate(-180deg);
-}
-
 .checkmark-btn:hover {
   background-color: rgba(255, 255, 255, 0.95);
   border-color: #0d6efd;
@@ -358,70 +448,27 @@
   box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.5);
 }
 
-/* Accuracy display badge */
-.accuracy-display {
-  text-align: center;
-}
-
-.accuracy-display .badge {
-  font-size: 0.95rem;
-  padding: 0.5rem 0.75rem;
-}
-
-/* Make Auton button group and range visually white to contrast with blue background */
-.auton-tab .btn-outline-primary,
-.auton-tab .btn-outline-primary:hover,
-.auton-tab .btn-outline-primary:active,
-.auton-tab .btn-outline-primary:focus {
-  background-color: #ffffff;
-  color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.auton-tab .form-range {
-  background-color: #ffffff;
-}
-
-.form-range {
-  display: block;
-  width: min(100%, 30rem);
-  margin: 0.5rem auto 0;
-  height: 1.6rem;
-}
-
-.form-range::-webkit-slider-thumb {
-  width: 1.45rem;
-  height: 1.45rem;
-  margin-top: -0.45rem;
-}
-
-.form-range::-webkit-slider-runnable-track {
-  height: 0.75rem;
-  border-radius: 100rem;
-}
-
-.form-range::-moz-range-thumb {
-  width: 1.45rem;
-  height: 1.45rem;
-}
-
-.form-range::-moz-range-track {
-  height: 0.75rem;
-  border-radius: 100rem;
-}
-
-.form-range::-ms-thumb {
-  width: 1.45rem;
-  height: 1.45rem;
-}
-
-/* Keep starting-location buttons upright when rotated too */
+/* Counter-rotate overlaid buttons when field image is rotated */
+.field-image-container.rotated .checkmark-btn,
 .field-image-container.rotated .starting-location-btn {
   transform: translate(-50%, -50%) rotate(-180deg);
 }
 
-/* Responsive adjustments for checkmarks */
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
 @media (max-width: 768px) {
+  .field-image-container {
+    max-width: 420px;
+  }
+
+  .starting-location-btn {
+    width: 38px;
+    height: 38px;
+  }
+
   .checkmark-btn {
     width: 38px;
     height: 38px;
@@ -430,18 +477,28 @@
 }
 
 @media (max-width: 576px) {
-  .form-check {
-    gap: 0.9rem;
+  .field-image-container {
+    max-width: 340px;
   }
 
-  .form-check-input {
-    width: 2rem;
-    height: 2rem;
+  .starting-location-btn {
+    width: 34px;
+    height: 34px;
+    border-width: 1px;
+  }
+
+  .form-check {
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .form-check .form-check-input {
+    width: 1.8rem;
+    height: 1.8rem;
   }
 
   .form-check-label {
-    font-size: 1.3rem;
-    line-height: 1.25;
+    font-size: 1.1rem;
   }
 
   .form-check-lg .form-check-input {
@@ -494,5 +551,13 @@
     height: 34px;
     font-size: 18px;
     border-width: 1px;
+  }
+
+  .penalties-section {
+    margin-top: 2rem;
+  }
+
+  .alliance-section .btn-group {
+    max-width: 100%;
   }
 }

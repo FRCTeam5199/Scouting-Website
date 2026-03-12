@@ -4,12 +4,18 @@ import Navbar from "./components/Navbar"
 import { useEffect } from "react";
 import { syncOfflineData } from "./sync";
 import useNetworkStatus from "./hooks/useNetworkStatus";
+import { flushOfflineQueue } from "./sync";
+
 
 import Home from "./pages/Home"
 import Settings from "./pages/Settings"
 import Review from "./pages/Review"
 import PitScouting from "./pages/Pit-Scouting"
 import StandScouting from "./pages/Stand-Scouting"
+
+
+flushOfflineQueue();
+window.addEventListener("online", flushOfflineQueue);
 
 
 function App() {
