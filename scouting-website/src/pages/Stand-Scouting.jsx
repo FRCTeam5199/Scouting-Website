@@ -102,7 +102,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
         <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="scouter_name" className="form-label">
-              Scouter's Name <span className="text-danger">*</span>
+              Your Name <span className="text-danger">*</span>
             </label>
             <input
               id="scouter_name"
@@ -119,7 +119,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
 
           <div className="col-md-6 mb-3">
             <label htmlFor="scouter_team" className="form-label">
-              Scouter's Team # <span className="text-danger">*</span>
+              Your Team # <span className="text-danger">*</span>
             </label>
             <input
               id="scouter_team"
@@ -139,7 +139,7 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
         <div className="row">
           <div className="col-md-6 mb-3">
             <label htmlFor="scouted_team" className="form-label">
-              Scouted Team <span className="text-danger">*</span>
+              Team being scouted <span className="text-danger">*</span>
             </label>
             <input
               id="scouted_team"
@@ -423,7 +423,10 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
 
       {/* Fuel Shuttled */}
       <div className="form-section text-center mb-4 score-counter">
-        <h2 className="mb-3">Fuel Shuttled</h2>
+        <h2 className="mb-1">Fuel Shuttled</h2>
+        <p className="text-white mb-3" style={{ fontSize: "1.5rem", opacity: 0.85 }}>
+          (Intentionally shooting Fuel into their own Alliance Zone)
+        </p>
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>{formData.teleop_shuttled || 0}</div>
         {[1, 5, 10].map((step) => (
           <div key={`shuttle-${step}`} className="btn-group mb-3" role="group">
@@ -447,7 +450,7 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
         </div>
       </div>
 
-      {/* Turret + Shoot on the fly */}
+      {/* Turret + Scores while moving */}
       <div className="form-section mb-4">
         <div className="d-flex flex-wrap gap-4 justify-content-center">
           <div className="form-check form-check-lg">
@@ -458,7 +461,7 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
           <div className="form-check form-check-lg">
             <input className="form-check-input" type="checkbox" id="teleop_shoot_on_fly" name="teleop_shoot_on_fly"
               checked={formData.teleop_shoot_on_fly || false} onChange={(e) => handleChange(e)} />
-            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">Shoot on the fly</label>
+            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">Scores while moving</label>
           </div>
         </div>
       </div>
@@ -561,12 +564,12 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
 
   return (
     <div className="extra-tab">
-      <div className="form-section mb-4">
+      <div className="form-section mb-5">
         <h3 className="mb-3">Defense</h3>
-        <div className="row">
 
-          {/* Defense Rating */}
-          <div className="col-md-4 mb-3">
+        {/* Row 1: Defense Rating slider */}
+        <div className="row mb-4">
+          <div className="col-12">
             <label htmlFor="defense_rating" className="form-label">Rating</label>
             <input
               type="range" className="form-range" min="1" max="5"
@@ -577,23 +580,32 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
               <span className="badge bg-secondary fs-6">{formData.defense_rating || 1}</span>
             </div>
           </div>
+        </div>
 
-          {/* Chasing + Pinning */}
-          <div className="col-md-4 mb-3">
-            <div className="form-check mb-2">
+        {/* Row 2: Chasing, Pinning, Blocking — each on its own line */}
+        <div className="row mb-5">
+          <div className="col-12">
+            <div className="form-check form-check-lg mb-3">
               <input className="form-check-input" type="checkbox" id="defense_chasing" name="defense_chasing"
                 checked={formData.defense_chasing || false} onChange={(e) => handleChange(e)} />
               <label className="form-check-label" htmlFor="defense_chasing">Chasing</label>
             </div>
-            <div className="form-check">
+            <div className="form-check form-check-lg mb-3">
               <input className="form-check-input" type="checkbox" id="defense_pinning" name="defense_pinning"
                 checked={formData.defense_pinning || false} onChange={(e) => handleChange(e)} />
               <label className="form-check-label" htmlFor="defense_pinning">Pinning</label>
             </div>
+            <div className="form-check form-check-lg">
+              <input className="form-check-input" type="checkbox" id="defense_blocking" name="defense_blocking"
+                checked={formData.defense_blocking || false} onChange={(e) => handleChange(e)} />
+              <label className="form-check-label" htmlFor="defense_blocking">Blocking Bump/Trench</label>
+            </div>
           </div>
+        </div>
 
-          {/* Penalties */}
-          <div className="col-md-4 mb-3 penalties-section">
+        {/* Row 3: Penalties counter */}
+        <div className="row mb-5">
+          <div className="col-12">
             <label className="form-label d-block mb-2">Penalties</label>
             <div className="btn-group" role="group">
               <button type="button" className="btn btn-danger btn-lg" onClick={() => updatePenalties(-1)}>-</button>
@@ -604,6 +616,7 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Drive */}
@@ -781,6 +794,7 @@ export default function StandScouting() {
       defense_rating: 3,
       defense_chasing: false,
       defense_pinning: false,
+      defense_blocking: false,
       defense_penalties: 0,
       drive_robot_speed: 3,
       drive_intake_shooter_speed: 3,
@@ -860,7 +874,7 @@ export default function StandScouting() {
       "Shot Accuracy (Teleop)": `${values.teleop_shot_accuracy || 0}%`,
       "Alliance": values.alliance || "",
       "Has Turret?": values.teleop_turret ? "Yes" : "No",
-      "Can shoot on the fly?": values.teleop_shoot_on_fly ? "Yes" : "No",
+      "Can score while moving?": values.teleop_shoot_on_fly ? "Yes" : "No",
       "Climb (Teleop)": values.endgame_climb || "None",
       "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
       "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
@@ -868,6 +882,7 @@ export default function StandScouting() {
       "Defense Rating": values.defense_rating || 0,
       "Chasing": values.defense_chasing ? "Yes" : "No",
       "Pinning": values.defense_pinning ? "Yes" : "No",
+      "Blocking Bump/Trench": values.defense_blocking ? "Yes" : "No",
       "Penalties (Defense)": values.defense_penalties || 0,
       "Robot Speed": values.drive_robot_speed || 0,
       "Intake-to-Shooter Speed": values.drive_intake_shooter_speed || 0,
@@ -1030,6 +1045,7 @@ export default function StandScouting() {
       defense_rating: 3,
       defense_chasing: false,
       defense_pinning: false,
+      defense_blocking: false,
       defense_penalties: 0,
       drive_robot_speed: 3,
       drive_intake_shooter_speed: 3,
