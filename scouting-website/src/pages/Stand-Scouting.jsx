@@ -1084,9 +1084,18 @@ export default function StandScouting() {
     <div className="container mt-4">
       <h1 className="mb-4 text-center">Stand Scouting</h1>
 
-      <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center mb-4`} role="alert">
-        <i className={`bi ${isOnline ? "bi-wifi" : "bi-wifi-off"} me-2`}></i>
-        <small className="mb-0">{isOnline ? "Online - submissions go to server" : "Offline - submissions stored locally"}</small>
+      {/* Online/Offline status */}
+      <div className="row justify-content-center mb-3">
+        <div className="col-lg-8">
+          <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center`} role="alert">
+            <i className={`bi ${isOnline ? "bi-wifi" : "bi-wifi-off"} me-2`}></i>
+            <small className="mb-0">
+              {isOnline
+                ? "Online - Data will be sent to server"
+                : "Offline - Data will be saved locally and synced when online"}
+            </small>
+          </div>
+        </div>
       </div>
 
       {showSuccess && (
