@@ -1,29 +1,58 @@
+import { useState, useRef, useCallback } from "react";
 import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
-import { saveOffline, sendToServer } from "../sync";
-import { useState } from "react";
+import { saveOffline, sendToServer, handleImageUpload } from "../sync";
 
-function validate(values) {
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+function validate(values, imageFile) {
   const errors = {};
-  if (!values.scouter_name?.trim()) errors.scouter_name = "Required";
-  if (!values.scouter_team?.trim()) errors.scouter_team = "Required";
-  if (!values.team_number?.trim()) errors.team_number = "Required";
-  if (!values.length?.trim()) errors.length = "Required";
-  if (!values.width?.trim()) errors.width = "Required";
-  if (!values.starting_height?.trim()) errors.starting_height = "Required";
-  if (!values.weight?.trim()) errors.weight = "Required";
-  if (!values.batteries?.trim()) errors.batteries = "Required";
-  if (!values.drive_motors) errors.drive_motors = "Required";
-  if (values.drive_motors === "Other" && !values.drive_motors_other?.trim()) errors.drive_motors_other = "Required";
-  if (!values.vision_system) errors.vision_system = "Required";
-  if (values.vision_system === "Other" && !values.vision_system_other?.trim()) errors.vision_system_other = "Required";
-  if (!values.hopper_capacity?.trim()) errors.hopper_capacity = "Required";
-  if (!values.shooter_type) errors.shooter_type = "Required";
-  if (values.shooter_type === "Other" && !values.shooter_type_other?.trim()) errors.shooter_type_other = "Required";
-  if (!values.l1_climb_auto) errors.l1_climb_auto = "Required";
-  if (!values.l1_climb_endgame) errors.l1_climb_endgame = "Required";
+  if (!values.scouter_name?.trim())     errors.scouter_name     = "Required";
+  if (!values.scouter_team?.trim())     errors.scouter_team     = "Required";
+  if (!values.team_number?.trim())      errors.team_number      = "Required";
+  if (!values.length?.trim())           errors.length           = "Required";
+  if (!values.width?.trim())            errors.width            = "Required";
+  if (!values.starting_height?.trim())  errors.starting_height  = "Required";
+  if (!values.weight?.trim())           errors.weight           = "Required";
+  if (!values.batteries?.trim())        errors.batteries        = "Required";
+  if (!values.drive_motors)             errors.drive_motors     = "Required";
+  if (values.drive_motors === "Other" && !values.drive_motors_other?.trim())
+    errors.drive_motors_other = "Required";
+  if (!values.vision_system)            errors.vision_system    = "Required";
+  if (values.vision_system === "Other" && !values.vision_system_other?.trim())
+    errors.vision_system_other = "Required";
+  if (!values.hopper_capacity?.trim())  errors.hopper_capacity  = "Required";
+  if (!values.shooter_type)             errors.shooter_type     = "Required";
+  if (values.shooter_type === "Other" && !values.shooter_type_other?.trim())
+    errors.shooter_type_other = "Required";
+  if (!values.l1_climb_auto)            errors.l1_climb_auto    = "Required";
+  if (!values.l1_climb_endgame)         errors.l1_climb_endgame = "Required";
+  if (!imageFile)                       errors.image            = "A robot photo is required";
   return errors;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const img  = new Image();
+    const reader = new FileReader();
+    reader.onload  = (e) => { img.src = e.target.result; };
+    img.onload = () => {
+      const MAX_WIDTH = 800;
+      const scale    = Math.min(1, MAX_WIDTH / img.width);
+      const canvas   = document.createElement("canvas");
+      canvas.width   = img.width  * scale;
+      canvas.height  = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.7).split(",")[1]);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ButtonGroupField({ label, name, options, value, onChange, required, error, touched }) {
   return (
@@ -35,14 +64,9 @@ function ButtonGroupField({ label, name, options, value, onChange, required, err
         {options.map((opt) => (
           <div key={opt}>
             <input
-              type="radio"
-              className="btn-check"
-              name={name}
-              id={`${name}_${opt}`}
-              value={opt}
-              checked={value === opt}
-              onChange={onChange}
-              autoComplete="off"
+              type="radio" className="btn-check"
+              name={name} id={`${name}_${opt}`} value={opt}
+              checked={value === opt} onChange={onChange} autoComplete="off"
             />
             <label className="btn btn-outline-primary" htmlFor={`${name}_${opt}`}>
               {opt}
@@ -57,176 +81,208 @@ function ButtonGroupField({ label, name, options, value, onChange, required, err
   );
 }
 
-function PitScouting() {
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const isOnline = useNetworkStatus();
-
-  // async function uploadImage(event) {
-  //   const file = event.target.files[0];
-  //   const teamNumber = formData.team_number;
-  //   const reader = new FileReader();
-  //   reader.onload = async () => {
-  //     const base64 = reader.result.split(",")[1];
-  //     await fetch("https://abc123.execute-api.us-west-2.amazonaws.com/upload", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ teamNumber, image: base64 }),
-  //     });
-  //     alert("Robot image uploaded!");
-  //   };
-  //   reader.readAsDataURL(file);
-  // }
-
-  async function uploadImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const teamNumber = formData.team_number;
-
-  if (!teamNumber) {
-    alert("⚠️ Please enter a team number before uploading an image.");
-    return;
-  }
-
-  // If offline, don't even try
-  if (!isOnline) {
-    alert("⚠️ You are offline. Image upload requires internet.");
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = async () => {
-    try {
-      const base64 = reader.result.split(",")[1];
-
-      const response = await fetch(
-        "https://abc123.execute-api.us-west-2.amazonaws.com/prod/upload", // ✅ FIXED URL (stage added)
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            teamNumber,
-            image: base64,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
-      }
-
-      setSuccessMessage(`📸 Image uploaded for Team ${teamNumber}!`);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 4000);
-
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("❌ Image upload failed. Check connection or API.");
-    }
+function NumberInput({ id, name, label, value, onChange, onBlur, touched, error, placeholder, required }) {
+  const numericOnly = (e) => {
+    if (
+      !/[\d.]/.test(e.key) &&
+      !["Backspace", "Tab", "Delete", "ArrowLeft", "ArrowRight"].includes(e.key)
+    ) e.preventDefault();
   };
 
-  reader.readAsDataURL(file);
+  return (
+    <div className="mb-3">
+      {label && (
+        <label htmlFor={id} className="form-label">
+          {label} {required && <span className="text-danger">*</span>}
+        </label>
+      )}
+      <input
+        id={id} type="text" name={name} inputMode="decimal"
+        value={value} onChange={onChange} onBlur={onBlur}
+        onKeyDown={numericOnly}
+        className={`form-control ${touched ? (error ? "is-invalid" : "is-valid") : ""}`}
+        placeholder={placeholder}
+      />
+      <div className="invalid-feedback">{error}</div>
+    </div>
+  );
 }
 
+function ImageUploadField({ imageFile, imagePreview, onFileChange, error }) {
+  const inputRef = useRef(null);
+
+  return (
+    <div className="mb-4">
+      <label className="form-label fw-bold fs-5">
+        Upload Robot Picture <span className="text-danger">*</span>
+      </label>
+
+      <input
+        ref={inputRef} id="robotImage" type="file" accept="image/*"
+        onChange={onFileChange}
+        className={`form-control form-control-lg ${error ? "is-invalid" : ""}`}
+        style={{ padding: "1rem", fontSize: "1.1rem" }}
+      />
+      {error && <div className="invalid-feedback d-block">{error}</div>}
+
+      {/* Preview */}
+      {imagePreview && (
+        <div className="mt-3 text-center">
+          <img
+            src={imagePreview} alt="Robot preview"
+            style={{
+              maxWidth: "100%", maxHeight: "300px",
+              borderRadius: "0.5rem", border: "2px solid #dee2e6",
+              objectFit: "contain",
+            }}
+          />
+          <div className="mt-2 text-muted" style={{ fontSize: "0.875rem" }}>
+            {imageFile?.name}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Initial Values ───────────────────────────────────────────────────────────
+
+const INITIAL_VALUES = {
+  scouter_name:        "",
+  scouter_team:        "",
+  team_number:         "",
+  length:              "",
+  width:               "",
+  starting_height:     "",
+  weight:              "",
+  drive_motors:        "",
+  drive_motors_other:  "",
+  batteries:           "",
+  vision_system:       "",
+  vision_system_other: "",
+  hopper_capacity:     "",
+  l1_climb_auto:       "",
+  l1_climb_endgame:    "",
+  shooter_type:        "",
+  shooter_type_other:  "",
+  favorite_food:       "",
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+function PitScouting() {
+  const isOnline = useNetworkStatus();
+  const [showSuccess, setShowSuccess]   = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [imageFile, setImageFile]       = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageError, setImageError]     = useState("");
+    const [showClearModal, setShowClearModal] = useState(false);
+  const fileInputRef = useRef(null);
+  
+
+  // ── Image handling ──
+
+  const handleFileChange = useCallback((e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setImageError("");
+    setImagePreview(URL.createObjectURL(file));
+  }, []);
+
+  // ── Submit ──
+
   const onSubmit = async (values) => {
-    const driveMotors = values.drive_motors === "Other"
-      ? values.drive_motors_other || "Other"
-      : values.drive_motors;
+    // Validate image separately since it's outside useForm state
+    if (!imageFile) {
+      setImageError("A robot photo is required");
+      return;
+    }
 
-    const visionSystem = values.vision_system === "Other"
-      ? values.vision_system_other || "Other"
-      : values.vision_system;
-
-    const shooterType = values.shooter_type === "Other"
-      ? values.shooter_type_other || "Other"
-      : values.shooter_type;
+    // Build submission payload
+    const driveMotors  = values.drive_motors  === "Other" ? values.drive_motors_other  || "Other" : values.drive_motors;
+    const visionSystem = values.vision_system === "Other" ? values.vision_system_other || "Other" : values.vision_system;
+    const shooterType  = values.shooter_type  === "Other" ? values.shooter_type_other  || "Other" : values.shooter_type;
 
     const submission = {
-      "Scouter's Name":             values.scouter_name || "",
-      "Scouter's Team #":           values.scouter_team || "",
-      "Scouted Team #":              values.team_number || "",
-      "Length (w/ bumpers)":      values.length || "",
-      "Width (w/ bumpers)":       values.width || "",
-      "Starting Height":          values.starting_height || "",
-      "Weight":                   values.weight || "",
+      "Scouter's Name":             values.scouter_name     || "",
+      "Scouter's Team #":           values.scouter_team     || "",
+      "Scouted Team #":              values.team_number      || "",
+      "Length (w/ bumpers)":              values.length           || "",
+      "Width (w/ bumpers)":               values.width            || "",
+      "Starting Height":     values.starting_height  || "",
+      "Weight":             values.weight           || "",
       "Drive Motors":             driveMotors,
-      "# of Batteries in Pit":   values.batteries || "",
+      "# of Batteries in Pit":   values.batteries        || "",
       "Vision System":            visionSystem,
-      "Hopper Max Capacity":      values.hopper_capacity || "",
-      "Can L1 Climb in Auto?":    values.l1_climb_auto || "No",
+      "Hopper Max Capacity":      values.hopper_capacity  || "",
+      "Can L1 Climb in Auto?":    values.l1_climb_auto    || "No",
       "Can L1 Climb in Endgame?": values.l1_climb_endgame || "No",
       "Shooter Type":             shooterType,
-      "Robot's Favorite Food":    values.favorite_food || "",
+      "Robot's Favorite Food":    values.favorite_food    || "",
       submissionId: crypto.randomUUID(),
       sheet_name: "Pit Scouting",
     };
 
+    // Send form data
     try {
       if (isOnline) {
         await sendToServer(submission);
-        setSuccessMessage("Pit scouting data sent to server!");
       } else {
         await saveOffline(submission);
-        setSuccessMessage("Saved locally. Will sync when online.");
       }
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      console.error("Form submission failed:", err);
+      await saveOffline(submission);
     }
+
+    // Upload image — compress first, then send or queue
+    try {
+      const base64 = await compressImage(imageFile);
+      await handleImageUpload(values.team_number, base64);
+    } catch (err) {
+      console.error("[PitScouting] Image processing failed:", err);
+    }
+
+    setSuccessMessage(
+      isOnline
+        ? "Pit scouting data submitted successfully!"
+        : "Saved offline. Will sync when back online."
+    );
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 5000);
   };
 
-  const initialValues = {
-    scouter_name: "",
-    scouter_team: "",
-    team_number: "",
-    length: "",
-    width: "",
-    starting_height: "",
-    weight: "",
-    drive_motors: "",
-    drive_motors_other: "",
-    batteries: "",
-    vision_system: "",
-    vision_system_other: "",
-    hopper_capacity: "",
-    l1_climb_auto: "",
-    l1_climb_endgame: "",
-    shooter_type: "",
-    shooter_type_other: "",
-    favorite_food: "",
-  };
+  const validateWithImage = useCallback(
+    (values) => validate(values, imageFile),
+    [imageFile]
+  );
 
-  const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit } = useForm({
-    initialValues,
-    validate,
+  const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit, resetForm } = useForm({
+    initialValues: INITIAL_VALUES,
+    validate: validateWithImage,
     onSubmit,
   });
 
-  const numericOnly = (e) => {
-    if (
-      !/[\d.]/.test(e.key) &&
-      e.key !== "Backspace" &&
-      e.key !== "Tab" &&
-      e.key !== "Delete" &&
-      e.key !== "ArrowLeft" &&
-      e.key !== "ArrowRight"
-    ) {
-      e.preventDefault();
-    }
+  // ── Clear form ──
+
+  const handleClear = () => {
+    resetForm();
+    setImageFile(null);
+    setImagePreview(null);
+    setImageError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setShowClearModal(false);
   };
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="container mt-4">
       <h1 className="mb-4 text-center">Pit Scouting</h1>
 
-      {/* Online/Offline status */}
+      {/* Online/Offline banner */}
       <div className="row justify-content-center mb-3">
         <div className="col-lg-8">
           <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center`} role="alert">
@@ -240,6 +296,7 @@ function PitScouting() {
         </div>
       </div>
 
+      {/* Success banner */}
       {showSuccess && (
         <div className="row justify-content-center mb-3">
           <div className="col-lg-8">
@@ -271,118 +328,82 @@ function PitScouting() {
                 <div className="invalid-feedback">{errors.scouter_name}</div>
               </div>
 
-              <div className="col-md-4 mb-3">
-                <label htmlFor="scouter_team" className="form-label">
-                  Your Team # <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="scouter_team" type="text" name="scouter_team" inputMode="numeric"
-                  value={formData.scouter_team} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.scouter_team ? (errors.scouter_team ? "is-invalid" : "is-valid") : ""}`}
-                  placeholder="Enter your team number"
-                />
-                <div className="invalid-feedback">{errors.scouter_team}</div>
-              </div>
+              <NumberInput
+                id="scouter_team" name="scouter_team"
+                label="Your Team #" required
+                value={formData.scouter_team} onChange={handleChange} onBlur={handleBlur}
+                touched={touched.scouter_team} error={errors.scouter_team}
+                placeholder="e.g. 5199"
+              />
 
-              <div className="col-md-4 mb-3">
-                <label htmlFor="team_number" className="form-label">
-                  Team Being Scouted <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="team_number" type="text" name="team_number" inputMode="numeric"
-                  value={formData.team_number} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.team_number ? (errors.team_number ? "is-invalid" : "is-valid") : ""}`}
-                  placeholder="Enter scouted team number"
-                />
-                <div className="invalid-feedback">{errors.team_number}</div>
-              </div>
+              <NumberInput
+                id="team_number" name="team_number"
+                label="Team Being Scouted" required
+                value={formData.team_number} onChange={handleChange} onBlur={handleBlur}
+                touched={touched.team_number} error={errors.team_number}
+                placeholder="e.g. 254"
+              />
             </div>
 
             {/* ── Robot Dimensions ── */}
             <div className="row">
-              <div className="col-md-4 mb-3">
-                <label htmlFor="length" className="form-label">
-                  Length (w/ bumpers) <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="length" type="text" name="length" inputMode="decimal"
+              <div className="col-md-4">
+                <NumberInput
+                  id="length" name="length"
+                  label="Length (in)" required
                   value={formData.length} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.length ? (errors.length ? "is-invalid" : "is-valid") : ""}`}
+                  touched={touched.length} error={errors.length}
                   placeholder='e.g. 32'
                 />
-                <div className="invalid-feedback">{errors.length}</div>
               </div>
-              <div className="col-md-4 mb-3">
-                <label htmlFor="width" className="form-label">
-                  Width (w/ bumpers) <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="width" type="text" name="width" inputMode="decimal"
+              <div className="col-md-4">
+                <NumberInput
+                  id="width" name="width"
+                  label="Width (in)" required
                   value={formData.width} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.width ? (errors.width ? "is-invalid" : "is-valid") : ""}`}
+                  touched={touched.width} error={errors.width}
                   placeholder='e.g. 28'
                 />
-                <div className="invalid-feedback">{errors.width}</div>
               </div>
-              <div className="col-md-4 mb-3">
-                <label htmlFor="starting_height" className="form-label">
-                  Starting Height <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="starting_height" type="text" name="starting_height" inputMode="decimal"
+              <div className="col-md-4">
+                <NumberInput
+                  id="starting_height" name="starting_height"
+                  label="Starting Height (in)" required
                   value={formData.starting_height} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.starting_height ? (errors.starting_height ? "is-invalid" : "is-valid") : ""}`}
+                  touched={touched.starting_height} error={errors.starting_height}
                   placeholder='e.g. 30'
                 />
-                <div className="invalid-feedback">{errors.starting_height}</div>
               </div>
             </div>
 
             {/* ── Weight & Batteries ── */}
             <div className="row">
-              <div className="col-md-6 mb-3">
-                <label htmlFor="weight" className="form-label">
-                  Weight (lbs) <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="weight" type="text" name="weight" inputMode="decimal"
+              <div className="col-md-6">
+                <NumberInput
+                  id="weight" name="weight"
+                  label="Weight (lbs)" required
                   value={formData.weight} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.weight ? (errors.weight ? "is-invalid" : "is-valid") : ""}`}
+                  touched={touched.weight} error={errors.weight}
                   placeholder="e.g. 115"
                 />
-                <div className="invalid-feedback">{errors.weight}</div>
               </div>
-              <div className="col-md-6 mb-3">
-                <label htmlFor="batteries" className="form-label">
-                  # of Batteries in Pit <span className="text-danger">*</span>
-                </label>
-                <input
-                  id="batteries" type="text" name="batteries" inputMode="numeric"
+              <div className="col-md-6">
+                <NumberInput
+                  id="batteries" name="batteries"
+                  label="# of Batteries in Pit" required
                   value={formData.batteries} onChange={handleChange} onBlur={handleBlur}
-                  onKeyDown={numericOnly}
-                  className={`form-control ${touched.batteries ? (errors.batteries ? "is-invalid" : "is-valid") : ""}`}
+                  touched={touched.batteries} error={errors.batteries}
                   placeholder="e.g. 2"
                 />
-                <div className="invalid-feedback">{errors.batteries}</div>
               </div>
             </div>
 
             {/* ── Drive Motors ── */}
             <ButtonGroupField
-              label="Drive Motors"
-              name="drive_motors"
+              label="Drive Motors" name="drive_motors" required
               options={["Kraken", "Neo", "Vortex", "CIM", "Other"]}
-              value={formData.drive_motors}
-              onChange={handleChange}
-              required
-              error={errors.drive_motors}
-              touched={touched.drive_motors}
+              value={formData.drive_motors} onChange={handleChange}
+              error={errors.drive_motors} touched={touched.drive_motors}
             />
             {formData.drive_motors === "Other" && (
               <div className="mb-3">
@@ -398,14 +419,10 @@ function PitScouting() {
 
             {/* ── Vision System ── */}
             <ButtonGroupField
-              label="Vision System"
-              name="vision_system"
+              label="Vision System" name="vision_system" required
               options={["PhotonVision", "Limelight", "None", "Other"]}
-              value={formData.vision_system}
-              onChange={handleChange}
-              required
-              error={errors.vision_system}
-              touched={touched.vision_system}
+              value={formData.vision_system} onChange={handleChange}
+              error={errors.vision_system} touched={touched.vision_system}
             />
             {formData.vision_system === "Other" && (
               <div className="mb-3">
@@ -420,30 +437,20 @@ function PitScouting() {
             )}
 
             {/* ── Hopper Capacity ── */}
-            <div className="mb-3">
-              <label htmlFor="hopper_capacity" className="form-label">
-                Hopper Max Capacity <span className="text-danger">*</span>
-              </label>
-              <input
-                id="hopper_capacity" type="text" name="hopper_capacity" inputMode="numeric"
-                value={formData.hopper_capacity} onChange={handleChange} onBlur={handleBlur}
-                onKeyDown={numericOnly}
-                className={`form-control ${touched.hopper_capacity ? (errors.hopper_capacity ? "is-invalid" : "is-valid") : ""}`}
-                placeholder="e.g. 5"
-              />
-              <div className="invalid-feedback">{errors.hopper_capacity}</div>
-            </div>
+            <NumberInput
+              id="hopper_capacity" name="hopper_capacity"
+              label="Hopper Max Capacity" required
+              value={formData.hopper_capacity} onChange={handleChange} onBlur={handleBlur}
+              touched={touched.hopper_capacity} error={errors.hopper_capacity}
+              placeholder="e.g. 5"
+            />
 
             {/* ── Shooter Type ── */}
             <ButtonGroupField
-              label="Shooter Type"
-              name="shooter_type"
+              label="Shooter Type" name="shooter_type" required
               options={["Drum", "Double Shooter", "Turret", "Single Shooter", "Other"]}
-              value={formData.shooter_type}
-              onChange={handleChange}
-              required
-              error={errors.shooter_type}
-              touched={touched.shooter_type}
+              value={formData.shooter_type} onChange={handleChange}
+              error={errors.shooter_type} touched={touched.shooter_type}
             />
             {formData.shooter_type === "Other" && (
               <div className="mb-3">
@@ -461,26 +468,18 @@ function PitScouting() {
             <div className="row">
               <div className="col-md-6">
                 <ButtonGroupField
-                  label="Can L1 Climb in Auto?"
-                  name="l1_climb_auto"
+                  label="Can L1 Climb in Auto?" name="l1_climb_auto" required
                   options={["Yes", "No"]}
-                  value={formData.l1_climb_auto}
-                  onChange={handleChange}
-                  required
-                  error={errors.l1_climb_auto}
-                  touched={touched.l1_climb_auto}
+                  value={formData.l1_climb_auto} onChange={handleChange}
+                  error={errors.l1_climb_auto} touched={touched.l1_climb_auto}
                 />
               </div>
               <div className="col-md-6">
                 <ButtonGroupField
-                  label="Can L1 Climb in Endgame?"
-                  name="l1_climb_endgame"
+                  label="Can L1 Climb in Endgame?" name="l1_climb_endgame" required
                   options={["Yes", "No"]}
-                  value={formData.l1_climb_endgame}
-                  onChange={handleChange}
-                  required
-                  error={errors.l1_climb_endgame}
-                  touched={touched.l1_climb_endgame}
+                  value={formData.l1_climb_endgame} onChange={handleChange}
+                  error={errors.l1_climb_endgame} touched={touched.l1_climb_endgame}
                 />
               </div>
             </div>
@@ -498,29 +497,64 @@ function PitScouting() {
             </div>
 
             {/* ── Robot Image ── */}
-            <div className="mb-4">
-              <label htmlFor="robotImage" className="form-label fw-bold fs-5">
-                Upload Robot Picture
-              </label>
-              <input
-                id="robotImage" type="file" accept="image/*"
-                onChange={uploadImage}
-                className="form-control form-control-lg"
-                style={{ padding: "1rem", fontSize: "1.1rem" }}
-              />
+            <ImageUploadField
+              imageFile={imageFile}
+              imagePreview={imagePreview}
+              onFileChange={handleFileChange}
+              error={imageError}
+              inputRef={fileInputRef}
+            />
+
+            {/* ── Actions ── */}
+            <div className="row g-2">
+              <div className="col-6">
+                <button
+                  type="button" className="btn btn-danger btn-lg w-100"
+                  onClick={() => setShowClearModal(true)}
+                >
+                  Clear Form
+                </button>
+              </div>
+              <div className="col-6">
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg w-100">
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                      Saving...
+                    </>
+                  ) : "Submit Pit Scouting"}
+                </button>
+              </div>
             </div>
 
-            {/* ── Submit ── */}
-            <div className="d-grid">
-              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg">
-                {isSubmitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </>
-                ) : "Submit Pit Scouting"}
-              </button>
-            </div>
+            {/* Clear confirmation modal */}
+            {showClearModal && (
+              <div style={{
+                position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 1000,
+              }}>
+                <div style={{
+                  backgroundColor: "white", padding: "2rem",
+                  borderRadius: "0.5rem", textAlign: "center", minWidth: "300px",
+                }}>
+                  <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem", color: "#000" }}>
+                    Are you sure you want to clear this form?
+                  </p>
+                  <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+                    <button type="button" className="btn btn-primary"
+                      onClick={() => setShowClearModal(false)}>
+                      No
+                    </button>
+                    <button type="button" className="btn btn-secondary"
+                      onClick={handleClear}>
+                      Yes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </form>
         </div>

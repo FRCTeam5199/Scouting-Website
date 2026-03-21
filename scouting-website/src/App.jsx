@@ -2,9 +2,8 @@ import { Link, Route, Routes } from "react-router-dom"
 import Navbar from "./components/Navbar"
 
 import { useEffect } from "react";
-import { syncOfflineData } from "./sync";
+import { syncOfflineData, flushOfflineQueue } from "./sync";
 import useNetworkStatus from "./hooks/useNetworkStatus";
-import { flushOfflineQueue } from "./sync";
 
 
 import Home from "./pages/Home"
@@ -14,8 +13,14 @@ import PitScouting from "./pages/Pit-Scouting"
 import StandScouting from "./pages/Stand-Scouting"
 
 
+// Run on load
 flushOfflineQueue();
-window.addEventListener("online", flushOfflineQueue);
+
+// Run whenever connectivity is restored
+window.addEventListener("online", () => {
+  console.log("[App] Back online — flushing queues");
+  flushOfflineQueue();
+});
 
 
 function App() {
