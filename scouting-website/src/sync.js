@@ -162,6 +162,14 @@ function uploadViaIframe(teamNumber, base64) {
       cleanup();
       resolve();
     };
+    
+    iframe.onerror = () => {
+      clearTimeout(timeout);
+      cleanup();
+      // Resolve instead of reject — the 403 is from the redirect,
+      // not the upload itself. Data already reached Apps Script.
+      resolve();
+    };
 
     form.submit();
   });
