@@ -2,6 +2,7 @@ import React from 'react';
 import * as FaIcons from 'react-icons/fa';
 import * as AiIcons from 'react-icons/ai';
 import * as IoIcons from 'react-icons/io';
+import * as ImIcons from 'react-icons/im';
 
 // Pages on the menu bar
 export const SidebarData = [
@@ -20,13 +21,13 @@ export const SidebarData = [
   {
     title: 'Pit Scouting',
     path: '/pit-scouting',
-    icon: <FaIcons.FaCartPlus />,
+    icon: <FaIcons.FaWrench />,
     cName: 'nav-text'
   },
   {
-    title: 'Review',
+    title: 'Statistics',
     path: '/review',
-    icon: <IoIcons.IoMdPeople />,
+    icon: <ImIcons.ImStatsBars />,
     cName: 'nav-text'
   },
   {

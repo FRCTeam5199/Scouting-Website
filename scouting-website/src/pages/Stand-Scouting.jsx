@@ -3,16 +3,18 @@ import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
 import useTimer from "../hooks/useTimer";
 import { saveDraft, loadDraft, saveOffline, sendToServer, clearDraft } from "../sync";
+import { useSharedScouter, getPreservedScouter } from "../hooks/useSharedScouter";
 import "../styles/StandScouting.css";
 
 function validate(values) {
   const errors = {};
   if (!values.scouter_name?.toString().trim()) errors.scouter_name = "Required";
   if (!values.scouter_team?.toString().trim()) errors.scouter_team = "Required";
+  if (values.scouter_team && !/^\d+$/.test(values.scouter_team.toString().trim())) errors.scouter_team = "Must be a number";
   if (!values.scouted_team?.toString().trim()) errors.scouted_team = "Required";
-  if (!values.alliance) errors.alliance = "Required";
+  if (values.scouted_team && !/^\d+$/.test(values.scouted_team.toString().trim())) errors.scouted_team = "Must be a number";
   if (!values.match_number?.toString().trim()) errors.match_number = "Required";
-  if (!values.starting_location?.toString().trim()) errors.starting_location = "Required";
+  if (values.match_number && !/^\d+$/.test(values.match_number.toString().trim())) errors.match_number = "Must be a number";
   return errors;
 }
 
@@ -42,41 +44,30 @@ const TAB_LABELS = {
   comments: "Comments",
 };
 
+const numericOnly = (e) => {
+  if (
+    !/[\d]/.test(e.key) &&
+    !["Backspace", "Tab", "Delete", "ArrowLeft", "ArrowRight"].includes(e.key)
+  ) e.preventDefault();
+};
+
 function TabNavButtons({ currentTab, onNavigate }) {
   const currentIndex = TAB_ORDER.indexOf(currentTab);
   const prevTab = currentIndex > 0 ? TAB_ORDER[currentIndex - 1] : null;
   const nextTab = currentIndex < TAB_ORDER.length - 1 ? TAB_ORDER[currentIndex + 1] : null;
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === TAB_ORDER.length - 1;
-
-  // First tab: align Next to the right
-  // Last tab: align Back to the left
-  // Middle tabs: space between
-  const justifyClass = isFirst
-    ? "justify-content-end"
-    : isLast
-    ? "justify-content-start"
-    : "justify-content-between";
+  const justifyClass = isFirst ? "justify-content-end" : isLast ? "justify-content-start" : "justify-content-between";
 
   return (
     <div className={`d-flex ${justifyClass} mt-4 mb-2`}>
       {!isFirst && (
-        <button
-          type="button"
-          className="btn btn-secondary btn-lg"
-          style={{ minWidth: "110px" }}
-          onClick={() => onNavigate(prevTab)}
-        >
+        <button type="button" className="btn btn-secondary btn-lg" style={{ minWidth: "110px" }} onClick={() => onNavigate(prevTab)}>
           ← {TAB_LABELS[prevTab]}
         </button>
       )}
       {!isLast && (
-        <button
-          type="button"
-          className="btn btn-primary btn-lg"
-          style={{ minWidth: "110px" }}
-          onClick={() => onNavigate(nextTab)}
-        >
+        <button type="button" className="btn btn-primary btn-lg" style={{ minWidth: "110px" }} onClick={() => onNavigate(nextTab)}>
           {TAB_LABELS[nextTab]} →
         </button>
       )}
@@ -86,9 +77,7 @@ function TabNavButtons({ currentTab, onNavigate }) {
 
 function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotated, setRotated, onNavigate }) {
   const isBlueAlliance = formData.alliance === "Blue";
-  const fieldImage = isBlueAlliance
-    ? "/icons/blueAllianceField-2026.png"
-    : "/icons/redAllianceField-2026.png";
+  const fieldImage = isBlueAlliance ? "/icons/blueAllianceField-2026.png" : "/icons/redAllianceField-2026.png";
 
   const handleStartingLocationClick = (index) => {
     handleChange({ target: { name: "starting_location", value: String(index + 1), type: "text" } });
@@ -97,37 +86,23 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
   return (
     <div className="pre-game-tab">
       <div className="form-section mb-4">
-
-        {/* Row 1: Scouter Name + Scouter Team */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label htmlFor="scouter_name" className="form-label">
-              Your Name <span className="text-danger">*</span>
-            </label>
+            <label htmlFor="scouter_name" className="form-label">Scouter's Name <span className="text-danger">*</span></label>
             <input
-              id="scouter_name"
-              type="text"
-              name="scouter_name"
-              value={formData.scouter_name}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              id="scouter_name" type="text" name="scouter_name"
+              value={formData.scouter_name} onChange={handleChange} onBlur={handleBlur}
               className={`form-control ${touched.scouter_name && errors.scouter_name ? "is-invalid" : ""}`}
               placeholder="Enter your name"
             />
             <div className="invalid-feedback">{errors.scouter_name}</div>
           </div>
-
           <div className="col-md-6 mb-3">
-            <label htmlFor="scouter_team" className="form-label">
-              Your Team # <span className="text-danger">*</span>
-            </label>
+            <label htmlFor="scouter_team" className="form-label">Scouter's Team # <span className="text-danger">*</span></label>
             <input
-              id="scouter_team"
-              type="text"
-              name="scouter_team"
-              value={formData.scouter_team}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              id="scouter_team" type="text" name="scouter_team" inputMode="numeric"
+              value={formData.scouter_team} onChange={handleChange} onBlur={handleBlur}
+              onKeyDown={numericOnly}
               className={`form-control ${touched.scouter_team && errors.scouter_team ? "is-invalid" : ""}`}
               placeholder="Enter your team number"
             />
@@ -135,36 +110,24 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
           </div>
         </div>
 
-        {/* Row 2: Scouted Team + Match # */}
         <div className="row">
           <div className="col-md-6 mb-3">
-            <label htmlFor="scouted_team" className="form-label">
-              Team being scouted <span className="text-danger">*</span>
-            </label>
+            <label htmlFor="scouted_team" className="form-label">Scouted Team <span className="text-danger">*</span></label>
             <input
-              id="scouted_team"
-              type="text"
-              name="scouted_team"
-              value={formData.scouted_team}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              id="scouted_team" type="text" name="scouted_team" inputMode="numeric"
+              value={formData.scouted_team} onChange={handleChange} onBlur={handleBlur}
+              onKeyDown={numericOnly}
               className={`form-control ${touched.scouted_team && errors.scouted_team ? "is-invalid" : ""}`}
               placeholder="Enter scouted team number"
             />
             <div className="invalid-feedback">{errors.scouted_team}</div>
           </div>
-
           <div className="col-md-6 mb-3">
-            <label htmlFor="match_number" className="form-label">
-              Match # <span className="text-danger">*</span>
-            </label>
+            <label htmlFor="match_number" className="form-label">Match # <span className="text-danger">*</span></label>
             <input
-              id="match_number"
-              type="text"
-              name="match_number"
-              value={formData.match_number}
-              onChange={handleChange}
-              onBlur={handleBlur}
+              id="match_number" type="text" name="match_number" inputMode="numeric"
+              value={formData.match_number} onChange={handleChange} onBlur={handleBlur}
+              onKeyDown={numericOnly}
               className={`form-control ${touched.match_number && errors.match_number ? "is-invalid" : ""}`}
               placeholder="Enter match number"
             />
@@ -172,40 +135,30 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
           </div>
         </div>
 
-        {/* Row 3: Alliance — centered below Match # */}
         <div className="row">
           <div className="col-12">
             <div className="alliance-section">
-              <label className="form-label mb-2">
-                Alliance <span className="text-danger">*</span>
-              </label>
+              <label className="form-label mb-2">Alliance </label>
               <div className="btn-group" role="group" aria-label="Alliance selection">
                 <button
                   type="button"
-                  className={`btn btn-lg ${formData.alliance === "Red" ? "btn-danger text-white" : "btn-outline-danger"}`}
+                  className={`btn btn-lg ${formData.alliance === "Red" ? "btn-outline-danger active" : "btn-outline-danger"}`}
                   onClick={() => handleChange({ target: { name: "alliance", value: "Red", type: "text" } })}
-                >
-                  Red Alliance
-                </button>
+                >Red Alliance</button>
                 <button
                   type="button"
-                  className={`btn btn-lg ${formData.alliance === "Blue" ? "btn-primary text-white" : "btn-outline-primary"}`}
+                  className={`btn btn-lg ${formData.alliance === "Blue" ? "btn-outline-primary active" : "btn-outline-primary"}`}
                   onClick={() => handleChange({ target: { name: "alliance", value: "Blue", type: "text" } })}
-                >
-                  Blue Alliance
-                </button>
+                >Blue Alliance</button>
               </div>
-              {errors.alliance && <div className="text-danger mt-1">{errors.alliance}</div>}
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* Starting Location field image */}
       <div className="field-section text-center">
         <label className="form-label d-block mb-2 title-with-image">
-          Starting Location <span className="text-danger">*</span>
+          Starting Location
         </label>
         <div className={`field-image-container ${rotated ? "rotated" : ""}`}>
           <img src={fieldImage} alt="Field" className="field-image" />
@@ -217,14 +170,10 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
                 const isMirrored = isBlueAlliance;
                 let left = baseLeft;
                 let computedTop = top;
-                if (isMirrored) {
-                  left = 100 - left;
-                  computedTop = 100 - computedTop;
-                }
+                if (isMirrored) { left = 100 - left; computedTop = 100 - computedTop; }
                 return (
                   <button
-                    key={i}
-                    type="button"
+                    key={i} type="button"
                     className={`starting-location-btn ${formData.starting_location === String(i + 1) ? "active" : ""}`}
                     style={{ left: `${left}%`, top: `${computedTop}%` }}
                     onClick={() => handleStartingLocationClick(i)}
@@ -237,19 +186,16 @@ function PreGameTab({ formData, errors, touched, handleChange, handleBlur, rotat
           </div>
         </div>
         <div className="mt-2 d-flex justify-content-center">
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>
-            Switch Sides
-          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRotated((r) => !r)}>Switch Sides</button>
         </div>
-        {errors.starting_location && touched.starting_location && (
-          <div className="invalid-feedback d-block mt-2">{errors.starting_location}</div>
-        )}
       </div>
 
       <TabNavButtons currentTab="pre-game" onNavigate={onNavigate} />
     </div>
   );
 }
+
+const AUTON_PATH_LABELS = ["Shuttle-Right", "Shuttle-Left", "Tower", "Depot", "Chute"];
 
 function AutonTab({ formData, handleChange, rotated, setRotated, onNavigate }) {
   const isBlueAlliance = formData.alliance === "Blue";
@@ -399,7 +345,6 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
     const next = Math.max(0, Number(formData.fuel_scored || 0) + delta);
     handleChange({ target: { name: "fuel_scored", value: next, type: "text" } });
   };
-
   const updateShuttles = (delta) => {
     const next = Math.max(0, Number(formData.teleop_shuttled || 0) + delta);
     handleChange({ target: { name: "teleop_shuttled", value: next, type: "text" } });
@@ -407,8 +352,6 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
 
   return (
     <div className="teleop-tab">
-
-      {/* Fuel Scored */}
       <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-3">Fuel Scored</h2>
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>{formData.fuel_scored || 0}</div>
@@ -421,10 +364,9 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
         ))}
       </div>
 
-      {/* Fuel Shuttled */}
       <div className="form-section text-center mb-4 score-counter">
         <h2 className="mb-1">Fuel Shuttled</h2>
-        <p className="text-white mb-3" style={{ fontSize: "1.5rem", opacity: 0.85 }}>
+        <p className="text-white mb-3" style={{ fontSize: "0.9rem", opacity: 0.85 }}>
           (Intentionally shooting Fuel into their own Alliance Zone)
         </p>
         <div className="display-1 mb-3" style={{ fontSize: "3rem" }}>{formData.teleop_shuttled || 0}</div>
@@ -437,32 +379,29 @@ function TeleopTab({ formData, handleChange, onNavigate }) {
         ))}
       </div>
 
-      {/* Shot Accuracy */}
       <div className="form-section mb-4">
         <label htmlFor="teleop_shot_accuracy" className="form-label">Shot Accuracy</label>
-        <input
-          type="range" className="form-range" min="0" max="100"
+        <input type="range" className="form-range" min="0" max="100"
           value={formData.teleop_shot_accuracy || 0} id="teleop_shot_accuracy" name="teleop_shot_accuracy"
-          onChange={(e) => handleChange(e)}
-        />
+          onChange={(e) => handleChange(e)} />
         <div className="accuracy-display mt-2">
           <span className="badge bg-primary fs-6">{formData.teleop_shot_accuracy || 0}%</span>
         </div>
       </div>
 
-      {/* Turret + Scores while moving */}
       <div className="form-section mb-4">
         <div className="d-flex flex-wrap gap-4 justify-content-center">
-          <div className="form-check form-check-lg">
-            <input className="form-check-input" type="checkbox" id="teleop_turret" name="teleop_turret"
-              checked={formData.teleop_turret || false} onChange={(e) => handleChange(e)} />
-            <label className="form-check-label" htmlFor="teleop_turret">Turret</label>
-          </div>
-          <div className="form-check form-check-lg">
-            <input className="form-check-input" type="checkbox" id="teleop_shoot_on_fly" name="teleop_shoot_on_fly"
-              checked={formData.teleop_shoot_on_fly || false} onChange={(e) => handleChange(e)} />
-            <label className="form-check-label" htmlFor="teleop_shoot_on_fly">Scores while moving</label>
-          </div>
+          {[
+            { id: "teleop_turret", name: "teleop_turret", label: "Turret" },
+            { id: "teleop_shoot_on_fly", name: "teleop_shoot_on_fly", label: "Scores while moving" },
+            { id: "teleop_bulldozing", name: "teleop_bulldozing", label: "Bulldozing" },
+          ].map(({ id, name, label }) => (
+            <div key={id} className="form-check form-check-lg">
+              <input className="form-check-input" type="checkbox" id={id} name={name}
+                checked={formData[name] || false} onChange={(e) => handleChange(e)} />
+              <label className="form-check-label" htmlFor={id}>{label}</label>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -480,74 +419,48 @@ function EndgameTab({ formData, handleChange, onNavigate }) {
 
   useEffect(() => {
     if (!timer.isRunning) return;
-    if ((Number(formData.endgame_time_to_climb) || 0) !== timer.time) {
-      handleTimerChange(timer.time);
-    }
+    if ((Number(formData.endgame_time_to_climb) || 0) !== timer.time) handleTimerChange(timer.time);
   }, [timer.time, timer.isRunning, formData.endgame_time_to_climb]);
 
   return (
     <div className="endgame-tab">
       <div className="row">
-
-        {/* Climb button group */}
         <div className="col-md-6 mb-4">
           <label className="form-label d-block mb-3">Climb</label>
           <div className="climb-button-group">
-            {[
-              { value: "", label: "None" },
-              { value: "L1", label: "L1" },
-              { value: "L2", label: "L2" },
-              { value: "L3", label: "L3" },
-              { value: "Failed Climb", label: "Failed" },
-            ].map(({ value, label }) => (
+            {[{ value: "", label: "None" }, { value: "L1", label: "L1" }, { value: "L2", label: "L2" }, { value: "L3", label: "L3" }, { value: "Failed Climb", label: "Failed" }].map(({ value, label }) => (
               <div key={value || "none"} style={{ flex: "1 1 0", minWidth: 0 }}>
-                <input
-                  type="radio" className="btn-check" name="endgame_climb"
+                <input type="radio" className="btn-check" name="endgame_climb"
                   id={`climb_${value || "none"}`} value={value}
                   checked={formData.endgame_climb === value}
-                  onChange={(e) => handleChange(e)} autoComplete="off"
-                />
-                <label className="btn btn-outline-primary w-100" htmlFor={`climb_${value || "none"}`}>
-                  {label}
-                </label>
+                  onChange={(e) => handleChange(e)} autoComplete="off" />
+                <label className="btn btn-outline-primary w-100" htmlFor={`climb_${value || "none"}`}>{label}</label>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Climb Location checkboxes */}
-      <div className="col-md-6 mb-4 order-2 order-md-1 climb-location-col">
-        <label className="form-label d-block mb-3">Climb Location</label>
-        <div className="form-check justify-content-md-end mb-2">
-          <input className="form-check-input" type="checkbox" id="climb_side" name="endgame_climbed_side"
-            checked={formData.endgame_climbed_side || false} onChange={(e) => handleChange(e)} />
-          <label className="form-check-label" htmlFor="climb_side">Climbed on side of Tower</label>
+        <div className="col-md-6 mb-4" style={{ paddingLeft: "2rem" }}>
+          <label className="form-label d-block mb-3">Climb Location</label>
+          <div className="form-check form-check-lg mb-2">
+            <input className="form-check-input" type="checkbox" id="climb_side" name="endgame_climbed_side"
+              checked={formData.endgame_climbed_side || false} onChange={(e) => handleChange(e)} />
+            <label className="form-check-label" htmlFor="climb_side">Climbed on side of Tower</label>
+          </div>
+          <div className="form-check form-check-lg">
+            <input className="form-check-input" type="checkbox" id="climb_center" name="endgame_climbed_center"
+              checked={formData.endgame_climbed_center || false} onChange={(e) => handleChange(e)} />
+            <label className="form-check-label" htmlFor="climb_center">Climbed on center of Tower</label>
+          </div>
         </div>
-        <div className="form-check justify-content-md-end">
-          <input className="form-check-input" type="checkbox" id="climb_center" name="endgame_climbed_center"
-            checked={formData.endgame_climbed_center || false} onChange={(e) => handleChange(e)} />
-          <label className="form-check-label" htmlFor="climb_center">Climbed on center of Tower</label>
-        </div>
-      </div>
       </div>
 
-      {/* Timer */}
       <div className="form-section mb-4 text-center">
         <label className="form-label d-block mb-3">Time to climb from Tower Base</label>
-        <div className="display-1 mb-3" style={{ fontSize: "2.5rem", fontFamily: "monospace" }}>
-          {timer.formatTime()}
-        </div>
+        <div className="display-1 mb-3" style={{ fontSize: "2.5rem", fontFamily: "monospace" }}>{timer.formatTime()}</div>
         <div className="d-flex gap-2 justify-content-center mb-3">
-          <button type="button" className="btn btn-danger"
-            onClick={() => { timer.reset(); handleTimerChange(0); }}
-            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>
-            Reset
-          </button>
-          <button type="button" className="btn btn-primary"
-            onClick={() => timer.toggle()}
-            style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>
-            {timer.isRunning ? "Stop Timer" : "Toggle Timer"}
-          </button>
+          <button type="button" className="btn btn-danger" onClick={() => { timer.reset(); handleTimerChange(0); }} style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>Reset</button>
+          <button type="button" className="btn btn-primary" onClick={() => timer.toggle()} style={{ fontSize: "1.5rem", padding: "0.75rem 1.5rem" }}>{timer.isRunning ? "Stop Timer" : "Toggle Timer"}</button>
         </div>
       </div>
 
@@ -564,26 +477,22 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
 
   return (
     <div className="extra-tab">
-      <div className="form-section mb-5">
+      <div className="form-section mb-4">
         <h3 className="mb-3">Defense</h3>
 
-        {/* Row 1: Defense Rating slider */}
         <div className="row mb-4">
           <div className="col-12">
             <label htmlFor="defense_rating" className="form-label">Rating</label>
-            <input
-              type="range" className="form-range" min="1" max="5"
+            <input type="range" className="form-range" min="1" max="5"
               value={formData.defense_rating || 1} id="defense_rating" name="defense_rating"
-              onChange={handleChange}
-            />
+              onChange={handleChange} />
             <div className="text-center mt-1">
               <span className="badge bg-secondary fs-6">{formData.defense_rating || 1}</span>
             </div>
           </div>
         </div>
 
-        {/* Row 2: Chasing, Pinning, Blocking — each on its own line */}
-        <div className="row mb-5">
+        <div className="row mb-4">
           <div className="col-12">
             <div className="form-check form-check-lg mb-3">
               <input className="form-check-input" type="checkbox" id="defense_chasing" name="defense_chasing"
@@ -603,23 +512,18 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
           </div>
         </div>
 
-        {/* Row 3: Penalties counter */}
-        <div className="row mb-5">
+        <div className="row mb-4">
           <div className="col-12">
             <label className="form-label d-block mb-2">Penalties</label>
             <div className="btn-group" role="group">
               <button type="button" className="btn btn-danger btn-lg" onClick={() => updatePenalties(-1)}>-</button>
-              <button type="button" className="btn btn-light btn-lg" disabled style={{ minWidth: "3rem" }}>
-                {formData.defense_penalties || 0}
-              </button>
+              <button type="button" className="btn btn-light btn-lg" disabled style={{ minWidth: "3rem" }}>{formData.defense_penalties || 0}</button>
               <button type="button" className="btn btn-success btn-lg" onClick={() => updatePenalties(1)}>+</button>
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* Drive */}
       <div className="form-section">
         <h3 className="mb-3">Drive</h3>
         {[
@@ -629,11 +533,8 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
         ].map(({ label, name }) => (
           <div key={name} className="mb-3">
             <label htmlFor={name} className="form-label">{label}</label>
-            <input
-              type="range" className="form-range" min="1" max="5"
-              value={formData[name] || 1} id={name} name={name}
-              onChange={handleChange}
-            />
+            <input type="range" className="form-range" min="1" max="5"
+              value={formData[name] || 1} id={name} name={name} onChange={handleChange} />
             <div className="text-center mt-1">
               <span className="badge bg-secondary fs-6">{formData[name] || 1}</span>
             </div>
@@ -646,7 +547,8 @@ function ExtraTab({ formData, handleChange, onNavigate }) {
   );
 }
 
-function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClearForm, onNavigate }) {
+function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClearForm, onNavigate,
+  showValidationAlert, validationAlertRef, showSuccess, successMessage, onDismissSuccess, successAlertRef }) {
   const [showClearModal, setShowClearModal] = useState(false);
 
   const checkboxes = [
@@ -663,21 +565,18 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
     { name: "can_shoot_stationary_anywhere", label: "Can shoot while stationary from any part of the field" },
     { name: "can_shoot_moving", label: "Can shoot while moving" },
     { name: "long_lineup_time", label: "Long line-up time to shoot Fuel" },
+    { name: "fuel_jammed", label: "Fuel got stuck/jammed inside robot" },
+    { name: "robot_beached", label: "Robot got beached by Bump/Fuel/Depot" },
   ];
 
   return (
     <div className="p-3 comments-tab">
-
       <div className="row g-3 mb-4">
         {checkboxes.map((cb) => (
           <div key={cb.name} className="col-6">
-            <div className="form-check form-check-lg">
-              <input
-                className="form-check-input" type="checkbox"
-                id={cb.name} name={cb.name}
-                checked={formData[cb.name] || false}
-                onChange={(e) => handleChange(e)}
-              />
+            <div className="form-check">
+              <input className="form-check-input" type="checkbox" id={cb.name} name={cb.name}
+                checked={formData[cb.name] || false} onChange={(e) => handleChange(e)} />
               <label className="form-check-label" htmlFor={cb.name}>{cb.label}</label>
             </div>
           </div>
@@ -696,57 +595,59 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
           onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3} />
       </div>
 
-      {/* Rescout + Clear + Submit */}
       <div className="row g-3 align-items-end mt-4">
         <div className="col-md-2">
           <label className="form-label d-block mb-2">Rescout Request</label>
-          <div className="btn-group w-100 rescout-button-group" role="group" aria-label="Rescout request">
+          <div className="btn-group w-100 rescout-button-group" role="group">
             <input type="radio" className="btn-check" name="rescout_request" id="rescout_no" value="No"
               checked={formData.rescout_request === "No"} onChange={handleChange} autoComplete="off" />
             <label className="btn btn-outline-primary" htmlFor="rescout_no">No</label>
-
             <input type="radio" className="btn-check" name="rescout_request" id="rescout_yes" value="Yes"
               checked={formData.rescout_request === "Yes"} onChange={handleChange} autoComplete="off" />
             <label className="btn btn-outline-primary" htmlFor="rescout_yes">Yes</label>
           </div>
         </div>
         <div className="col-md-2">
-          <button type="button" className="btn btn-danger btn-lg w-100" onClick={() => setShowClearModal(true)}>
-            Clear Form
-          </button>
+          <button type="button" className="btn btn-danger btn-lg w-100" onClick={() => setShowClearModal(true)}>Clear Form</button>
         </div>
         <div className="col-md-6 col-lg-5"></div>
         <div className="col-md-4">
           <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-lg w-100">
-            {isSubmitting ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Saving...
-              </>
-            ) : "Submit Scouting Data"}
+            {isSubmitting ? (<><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...</>) : "Submit Scouting Data"}
           </button>
         </div>
       </div>
 
+      {/* Validation alert — bottom of tab */}
+      {showValidationAlert && (
+        <div ref={validationAlertRef} className="alert alert-danger d-flex align-items-center mt-3" role="alert">
+          <svg className="bi flex-shrink-0 me-2" width="16" height="16" role="img" aria-label="Danger:">
+            <use xlinkHref="#exclamation-triangle-fill" />
+          </svg>
+          <div>Not all required information has been filled out yet!</div>
+        </div>
+      )}
+
+      {/* Success alert — bottom of tab */}
+      {showSuccess && (
+        <div ref={successAlertRef} className="alert alert-success alert-dismissible d-flex align-items-center mt-3 fade show" role="alert">
+          <svg className="bi flex-shrink-0 me-2" width="16" height="16" role="img" aria-label="Success:">
+            <use xlinkHref="#check-circle-fill" />
+          </svg>
+          <div>{successMessage}</div>
+          <button type="button" className="btn-close" onClick={onDismissSuccess} aria-label="Close" />
+        </div>
+      )}
+
       <TabNavButtons currentTab="comments" onNavigate={onNavigate} />
 
       {showClearModal && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
-        }}>
-          <div style={{
-            backgroundColor: "white", padding: "2rem",
-            borderRadius: "0.5rem", textAlign: "center", minWidth: "300px",
-          }}>
-            <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem", color: "#000" }}>
-              Are you sure you want to clear this form?
-            </p>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ backgroundColor: "white", padding: "2rem", borderRadius: "0.5rem", textAlign: "center", minWidth: "300px" }}>
+            <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem", color: "#000" }}>Are you sure you want to clear this form?</p>
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
               <button type="button" className="btn btn-primary" onClick={() => setShowClearModal(false)}>No</button>
-              <button type="button" className="btn btn-secondary"
-                onClick={() => { onClearForm(); setShowClearModal(false); }}>Yes</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { onClearForm(); setShowClearModal(false); }}>Yes</button>
             </div>
           </div>
         </div>
@@ -764,14 +665,23 @@ export default function StandScouting() {
   const [rotated, setRotated] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("pre-game");
+  const [sharedScouter, updateSharedScouter] = useSharedScouter();
+
+  const handleChangeWithSync = (e) => {
+    handleChange(e);
+    if (e.target.name === "scouter_name" || e.target.name === "scouter_team") {
+      updateSharedScouter(e.target.name, e.target.value);
+    }
+  };
 
   const [initialValues, setInitialValues] = useState(() => {
-    const defaultValues = {
-      scouter_name: "",
-      scouter_team: "",
+    const preserved = getPreservedScouter();
+    return {
+      scouter_name: preserved.scouter_name || "",
+      scouter_team: preserved.scouter_team || "",
       scouted_team: "",
-      alliance: "Red",
-      match_number: "",
+      alliance: normalizeAlliance(preserved.alliance) || "Red",
+      match_number: preserved.match_number || "",
       starting_location: "",
       has_robot_auton: "No",
       auton_shuttled: false,
@@ -787,6 +697,7 @@ export default function StandScouting() {
       teleop_shot_accuracy: 0,
       teleop_turret: false,
       teleop_shoot_on_fly: false,
+      teleop_bulldozing: false,
       endgame_climb: "",
       endgame_climbed_side: false,
       endgame_climbed_center: false,
@@ -812,37 +723,19 @@ export default function StandScouting() {
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
       long_lineup_time: false,
+      fuel_jammed: false,
+      robot_beached: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
       comments: "",
     };
-
-    const preserved = localStorage.getItem("standScoutingPreserved");
-    if (preserved) {
-      try {
-        const parsed = JSON.parse(preserved);
-        return {
-          ...defaultValues,
-          scouter_name: parsed.scouter_name || defaultValues.scouter_name,
-          scouter_team: parsed.scouter_team || defaultValues.scouter_team,
-          alliance: normalizeAlliance(parsed.alliance),
-          match_number: parsed.match_number || defaultValues.match_number,
-        };
-      } catch (e) {
-        return defaultValues;
-      }
-    }
-    return defaultValues;
   });
 
   const navigateToTab = (tabId) => {
     setActiveTab(tabId);
     const tabEl = document.getElementById(`${tabId}-tab`);
-    if (tabEl) {
-      const bsTab = window.bootstrap?.Tab?.getOrCreateInstance(tabEl);
-      bsTab?.show();
-    }
+    if (tabEl) window.bootstrap?.Tab?.getOrCreateInstance(tabEl)?.show();
   };
 
   const onSubmit = async (values) => {
@@ -875,6 +768,7 @@ export default function StandScouting() {
       "Alliance": values.alliance || "",
       "Has Turret?": values.teleop_turret ? "Yes" : "No",
       "Can score while moving?": values.teleop_shoot_on_fly ? "Yes" : "No",
+      "Bulldozing?": values.teleop_bulldozing ? "Yes" : "No",
       "Climb (Teleop)": values.endgame_climb || "None",
       "Climbed Side": values.endgame_climbed_side ? "Yes" : "No",
       "Climbed Center": values.endgame_climbed_center ? "Yes" : "No",
@@ -900,6 +794,8 @@ export default function StandScouting() {
       "Can shoot while stationary from any part of the field": values.can_shoot_stationary_anywhere ? "Yes" : "No",
       "Can shoot while moving": values.can_shoot_moving ? "Yes" : "No",
       "Long line-up time to shoot Fuel": values.long_lineup_time ? "Yes" : "No",
+      "Fuel got stuck/jammed inside robot": values.fuel_jammed ? "Yes" : "No",
+      "Robot got beached": values.robot_beached ? "Yes" : "No",
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
@@ -925,16 +821,14 @@ export default function StandScouting() {
     onSubmit,
   });
 
+  // Sync scouter name/team to shared localStorage on every keystroke
+  useSharedScouter(formData.scouter_name, formData.scouter_team);
+
   const latestDraftPayloadRef = useRef({ ...formData, field_image_rotated: rotated });
   const isDraftLoadedRef = useRef(isDraftLoaded);
 
-  useEffect(() => {
-    latestDraftPayloadRef.current = { ...formData, field_image_rotated: rotated };
-  }, [formData, rotated]);
-
-  useEffect(() => {
-    isDraftLoadedRef.current = isDraftLoaded;
-  }, [isDraftLoaded]);
+  useEffect(() => { latestDraftPayloadRef.current = { ...formData, field_image_rotated: rotated }; }, [formData, rotated]);
+  useEffect(() => { isDraftLoadedRef.current = isDraftLoaded; }, [isDraftLoaded]);
 
   useEffect(() => {
     let isMounted = true;
@@ -944,9 +838,7 @@ export default function StandScouting() {
         try {
           const raw = localStorage.getItem(EMERGENCY_DRAFT_KEY);
           emergencyDraft = raw ? JSON.parse(raw)?.data || null : null;
-        } catch (parseError) {
-          console.error("Failed to parse emergency draft:", parseError);
-        }
+        } catch {}
         const draft = await loadDraft("Stand Scouting");
         if (isMounted && (draft || emergencyDraft)) {
           const combinedDraft = { ...(draft || {}), ...(emergencyDraft || {}) };
@@ -997,7 +889,23 @@ export default function StandScouting() {
   }, []);
 
   const clearForm = () => resetForm();
+  const validationAlertRef = useRef(null);
+  const successAlertRef    = useRef(null);
 
+  useEffect(() => {
+    if (showValidationAlert && validationAlertRef.current) {
+      validationAlertRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [showValidationAlert]);
+
+  useEffect(() => {
+    if (showSuccess && successAlertRef.current) {
+      successAlertRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [showSuccess]);
+
+  
+  // Update onFormSubmit — scroll to alert on validation failure
   const onFormSubmit = async (e) => {
     e.preventDefault();
     await handleSubmit(e);
@@ -1005,17 +913,20 @@ export default function StandScouting() {
     const validationErrors = validate(formData);
     if (Object.keys(validationErrors).length > 0) {
       setShowValidationAlert(true);
+      setTimeout(() => {
+        validationAlertRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
       return;
     }
 
     setShowValidationAlert(false);
 
+
     const preservedName = formData.scouter_name || initialValues.scouter_name;
     const preservedScouterTeam = formData.scouter_team || initialValues.scouter_team;
     const preservedAlliance = normalizeAlliance(formData.alliance || initialValues.alliance);
     const rawMatch = String(formData.match_number || initialValues.match_number || "").trim();
-    const nextMatch = rawMatch !== "" && !Number.isNaN(Number(rawMatch))
-      ? String(Number(rawMatch) + 1) : rawMatch;
+    const nextMatch = rawMatch !== "" && !Number.isNaN(Number(rawMatch)) ? String(Number(rawMatch) + 1) : rawMatch;
 
     const newInitial = {
       scouter_name: preservedName,
@@ -1038,6 +949,7 @@ export default function StandScouting() {
       teleop_shot_accuracy: 0,
       teleop_turret: false,
       teleop_shoot_on_fly: false,
+      teleop_bulldozing: false,
       endgame_climb: "",
       endgame_climbed_side: false,
       endgame_climbed_center: false,
@@ -1063,6 +975,8 @@ export default function StandScouting() {
       can_shoot_stationary_anywhere: false,
       can_shoot_moving: false,
       long_lineup_time: false,
+      fuel_jammed: false,
+      robot_beached: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
@@ -1084,25 +998,17 @@ export default function StandScouting() {
     <div className="container mt-4">
       <h1 className="mb-4 text-center">Stand Scouting</h1>
 
-      {/* Online/Offline status */}
-      <div className="row justify-content-center mb-3">
-        <div className="col-lg-8">
-          <div className={`alert ${isOnline ? "alert-success" : "alert-warning"} d-flex align-items-center`} role="alert">
-            <i className={`bi ${isOnline ? "bi-wifi" : "bi-wifi-off"} me-2`}></i>
-            <small className="mb-0">
-              {isOnline
-                ? "Online - Data will be sent to server"
-                : "Offline - Data will be saved locally and synced when online"}
-            </small>
+      {/* Offline alert — scoped to form width, only shown when offline */}
+      {!isOnline && (
+        <div className="row justify-content-center mb-3">
+          <div className="col-lg-8">
+            <div className="alert alert-warning d-flex align-items-center" role="alert">
+              <svg className="bi flex-shrink-0 me-2" width="20" height="20" role="img" aria-label="Warning:">
+                <use xlinkHref="#exclamation-triangle-fill" />
+              </svg>
+              <small className="mb-0">Offline — submissions will be saved locally and synced when you reconnect.</small>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {showSuccess && (
-        <div className="alert alert-success alert-dismissible fade show" role="alert">
-          <i className="bi bi-check-circle-fill me-2"></i>
-          {successMessage}
-          <button type="button" className="btn-close" onClick={() => setShowSuccess(false)} aria-label="Close" />
         </div>
       )}
 
@@ -1117,10 +1023,8 @@ export default function StandScouting() {
                       <button
                         className={`nav-link ${activeTab === tabId ? "active" : ""}`}
                         id={`${tabId}-tab`}
-                        data-bs-toggle="tab"
-                        data-bs-target={`#${tabId}-pane`}
-                        type="button"
-                        role="tab"
+                        data-bs-toggle="tab" data-bs-target={`#${tabId}-pane`}
+                        type="button" role="tab"
                         aria-controls={`${tabId}-pane`}
                         aria-selected={activeTab === tabId}
                         onClick={() => setActiveTab(tabId)}
@@ -1131,17 +1035,9 @@ export default function StandScouting() {
                   ))}
                 </ul>
 
-                {showValidationAlert && (
-                  <div className="mt-3">
-                    <div className="alert alert-danger d-flex align-items-center" role="alert">
-                      <div>Not all required information has been filled out yet!</div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="tab-content" id="scoutingTabContent">
                   <div className={`tab-pane fade ${activeTab === "pre-game" ? "show active" : ""}`} id="pre-game-pane" role="tabpanel" tabIndex="0">
-                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChange} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} onNavigate={navigateToTab} />
+                    <PreGameTab formData={formData} errors={errors} touched={touched} handleChange={handleChangeWithSync} handleBlur={handleBlur} rotated={rotated} setRotated={setRotated} onNavigate={navigateToTab} />
                   </div>
                   <div className={`tab-pane fade ${activeTab === "auton" ? "show active" : ""}`} id="auton-pane" role="tabpanel" tabIndex="0">
                     <AutonTab formData={formData} handleChange={handleChange} rotated={rotated} setRotated={setRotated} onNavigate={navigateToTab} />
@@ -1156,7 +1052,10 @@ export default function StandScouting() {
                     <ExtraTab formData={formData} handleChange={handleChange} onNavigate={navigateToTab} />
                   </div>
                   <div className={`tab-pane fade ${activeTab === "comments" ? "show active" : ""}`} id="comments-pane" role="tabpanel" tabIndex="0">
-                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} onClearForm={clearForm} onNavigate={navigateToTab} />
+                    <CommentsTab formData={formData} handleChange={handleChange} handleBlur={handleBlur} isSubmitting={isSubmitting} onClearForm={clearForm} onNavigate={navigateToTab} 
+                      showValidationAlert={showValidationAlert}validationAlertRef={validationAlertRef} showSuccess={showSuccess} successMessage={successMessage} onDismissSuccess={() => setShowSuccess(false)} 
+                      successAlertRef={successAlertRef}
+                    />                  
                   </div>
                 </div>
               </form>
@@ -1164,6 +1063,16 @@ export default function StandScouting() {
           </div>
         </div>
       </div>
+
+      {/* Bootstrap SVG sprite for icons */}
+      <svg xmlns="http://www.w3.org/2000/svg" style={{ display: "none" }}>
+        <symbol id="exclamation-triangle-fill" viewBox="0 0 16 16">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+        </symbol>
+        <symbol id="check-circle-fill" viewBox="0 0 16 16">
+          <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+        </symbol>
+      </svg>
     </div>
   );
 }
