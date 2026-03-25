@@ -214,7 +214,7 @@ export default Home;
 //               color: "#7c3aed",
 //               glow: "rgba(124,58,237,0.3)",
 //               desc: "Review all submitted stand and pit scouting entries. Verify data quality before alliance selection to make the best picks.",
-//               link: "/review",
+//               link: "/statistics",
 //               cta: "View Data →",
 //             },
 //           ].map((card) => (

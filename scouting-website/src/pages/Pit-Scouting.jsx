@@ -165,7 +165,7 @@ function PitScouting() {
     const submission = {
       "Scouter's Name":           values.scouter_name     || "",
       "Scouter's Team #":         values.scouter_team     || "",
-      "Team Number":              values.team_number      || "",
+      "Scouted Team #":              values.team_number      || "",
       "Length (w/ bumpers)":              values.length           || "",
       "Width (w/ bumpers)":               values.width            || "",
       "Starting Height":     values.starting_height  || "",

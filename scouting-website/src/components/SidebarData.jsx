@@ -3,6 +3,7 @@ import * as FaIcons from 'react-icons/fa';
 import * as AiIcons from 'react-icons/ai';
 import * as IoIcons from 'react-icons/io';
 import * as ImIcons from 'react-icons/im';
+import * as PiIcons from 'react-icons/pi';
 
 // Pages on the menu bar
 export const SidebarData = [
@@ -26,8 +27,20 @@ export const SidebarData = [
   },
   {
     title: 'Statistics',
-    path: '/review',
+    path: '/statistics',
     icon: <ImIcons.ImStatsBars />,
+    cName: 'nav-text'
+  },
+  {
+    title: 'Rankings',
+    path: '/rankings',
+    icon: <PiIcons.PiRankingBold />,
+    cName: 'nav-text'
+  },
+  {
+    title: 'Data Sheet',
+    path: '/data-sheet',
+    icon: <IoIcons.IoIosPaper />,
     cName: 'nav-text'
   },
   {
