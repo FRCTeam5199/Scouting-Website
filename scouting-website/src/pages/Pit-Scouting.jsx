@@ -3,6 +3,7 @@ import useForm from "../hooks/useForm";
 import useNetworkStatus from "../hooks/useNetworkStatus";
 import { saveOffline, sendToServer, handleImageUpload } from "../sync";
 import { useSharedScouter, getPreservedScouter } from "../hooks/useSharedScouter";
+import { useAutosave, getAutosave, clearAutosave } from "../hooks/useAutosave";
 
 function validate(values, imageFile) {
   const errors = {};
@@ -105,25 +106,26 @@ function compressImage(file) {
 
 function getInitialValues() {
   const preserved = getPreservedScouter();
+  const draft     = getAutosave("Pit Scouting");
   return {
     scouter_name:        preserved.scouter_name || "",
     scouter_team:        preserved.scouter_team || "",
-    team_number:         "",
-    length:              "",
-    width:               "",
-    starting_height:     "",
-    weight:              "",
-    drive_motors:        "",
-    drive_motors_other:  "",
-    batteries:           "",
-    vision_system:       "",
-    vision_system_other: "",
-    hopper_capacity:     "",
-    l1_climb_auto:       "",
-    l1_climb_endgame:    "",
-    shooter_type:        "",
-    shooter_type_other:  "",
-    favorite_food:       "",
+    team_number:         draft?.team_number         ?? "",
+    length:              draft?.length               ?? "",
+    width:               draft?.width                ?? "",
+    starting_height:     draft?.starting_height      ?? "",
+    weight:              draft?.weight               ?? "",
+    drive_motors:        draft?.drive_motors         ?? "",
+    drive_motors_other:  draft?.drive_motors_other   ?? "",
+    batteries:           draft?.batteries            ?? "",
+    vision_system:       draft?.vision_system        ?? "",
+    vision_system_other: draft?.vision_system_other  ?? "",
+    hopper_capacity:     draft?.hopper_capacity      ?? "",
+    l1_climb_auto:       draft?.l1_climb_auto        ?? "",
+    l1_climb_endgame:    draft?.l1_climb_endgame     ?? "",
+    shooter_type:        draft?.shooter_type         ?? "",
+    shooter_type_other:  draft?.shooter_type_other   ?? "",
+    favorite_food:       draft?.favorite_food        ?? "",
   };
 }
 
@@ -207,6 +209,7 @@ function PitScouting() {
 
     // Reset form but keep name/team autofill
     resetForm();
+    clearAutosave("Pit Scouting");
     setImageFile(null);
     setImagePreview(null);
     setImageError("");
@@ -248,7 +251,10 @@ function PitScouting() {
     return () => window.removeEventListener("storage", onStorage);
   }, [formData.scouter_name, formData.scouter_team, handleChange]);
 
-  // Autosave - THIS NEEDS TO BE DONE STILL !!!
+
+  useAutosave(formData, "Pit Scouting");
+
+
 
   const handleClear = () => {
     resetForm();
