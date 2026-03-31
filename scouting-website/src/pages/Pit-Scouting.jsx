@@ -159,6 +159,12 @@ function PitScouting() {
   }, []);
 
   const onSubmit = async (values) => {
+    
+    const generateId = () => {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+      return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    };
+
     if (!imageFile) { setImageError("A robot photo is required"); return; }
 
     const driveMotors  = values.drive_motors  === "Other" ? values.drive_motors_other  || "Other" : values.drive_motors;
@@ -182,16 +188,16 @@ function PitScouting() {
       "Shooter Type":             shooterType,
       "Robot's Favorite Food":    values.favorite_food    || "",
       "Funny Comments":           values.funny_comments   || "",
-      submissionId: crypto.randomUUID(),
+      submissionId: generateId(), // Circumvents AWS error
       sheet_name: "Pit Scouting",
     };
 
     if (isOnline) {
       await sendToServer(submission);
-      setSuccessMessage("Stand scouting data sent to server.");
+      setSuccessMessage("Pit scouting data sent to server.");
     } else {
       await saveOffline(submission);
-      setSuccessMessage("Stand scouting data saved locally and will sync when online.");
+      setSuccessMessage("Pit scouting data saved locally and will sync when online.");
     }
 
     try {
