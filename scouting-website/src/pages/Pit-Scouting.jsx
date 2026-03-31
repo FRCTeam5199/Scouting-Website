@@ -126,6 +126,7 @@ function getInitialValues() {
     shooter_type:        draft?.shooter_type         ?? "",
     shooter_type_other:  draft?.shooter_type_other   ?? "",
     favorite_food:       draft?.favorite_food        ?? "",
+    funny_comments:      draft?.funny_comments       ?? "",
   };
 }
 
@@ -180,6 +181,7 @@ function PitScouting() {
       "Can L1 Climb in Endgame?": values.l1_climb_endgame || "No",
       "Shooter Type":             shooterType,
       "Robot's Favorite Food":    values.favorite_food    || "",
+      "Funny Comments":           values.funny_comments   || "",
       submissionId: crypto.randomUUID(),
       sheet_name: "Pit Scouting",
     };
@@ -413,7 +415,7 @@ function PitScouting() {
 
             {/* ── Shooter Type ── */}
             <ButtonGroupField label="Shooter Type" name="shooter_type" required
-              options={["Drum", "Double Shooter", "Turret", "Single Shooter", "Other"]}
+              options={["Single Shooter", "Double Shooter", "Triple Shooter", "Turret", "Drum", "Other"]}
               value={formData.shooter_type} onChange={handleChange}
               error={errors.shooter_type} touched={touched.shooter_type} />
             {formData.shooter_type === "Other" && (
@@ -446,6 +448,13 @@ function PitScouting() {
               <input id="favorite_food" type="text" name="favorite_food"
                 value={formData.favorite_food} onChange={handleChange} onBlur={handleBlur}
                 className="form-control" placeholder="e.g. Lithium grease sandwiches" />
+            </div>
+
+            {/* ── Funny Comments ── */}
+            <div className="mb-3">
+              <label htmlFor="funny_comments" className="form-label">Funny Comments</label>
+              <textarea id="funny_comments" name="funny_comments" value={formData.funny_comments}
+                onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3} />
             </div>
 
             {/* ── Robot Image ── */}

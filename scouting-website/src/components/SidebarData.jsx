@@ -25,28 +25,28 @@ export const SidebarData = [
     icon: <FaIcons.FaWrench />,
     cName: 'nav-text'
   },
-  {
-    title: 'Statistics',
-    path: '/statistics',
-    icon: <ImIcons.ImStatsBars />,
-    cName: 'nav-text'
-  },
-  {
-    title: 'Rankings',
-    path: '/rankings',
-    icon: <PiIcons.PiRankingBold />,
-    cName: 'nav-text'
-  },
+  // {
+  //   title: 'Statistics',
+  //   path: '/statistics',
+  //   icon: <ImIcons.ImStatsBars />,
+  //   cName: 'nav-text'
+  // },
+  // {
+  //   title: 'Rankings',
+  //   path: '/rankings',
+  //   icon: <PiIcons.PiRankingBold />,
+  //   cName: 'nav-text'
+  // },
   {
     title: 'Data Sheet',
     path: '/data-sheet',
     icon: <IoIcons.IoIosPaper />,
     cName: 'nav-text'
   },
-  {
-    title: 'Settings',
-    path: '/settings',
-    icon: <FaIcons.FaCog />,
-    cName: 'nav-text'
-  },
+  // {
+  //   title: 'Settings',
+  //   path: '/settings',
+  //   icon: <FaIcons.FaCog />,
+  //   cName: 'nav-text'
+  // },
 ];
