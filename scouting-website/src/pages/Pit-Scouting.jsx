@@ -354,12 +354,12 @@ function PitScouting() {
             {/* ── Robot Dimensions ── */}
             <div className="row">
               <div className="col-md-4">
-                <NumberInput id="length" name="length" label="Length (in)" required
+                <NumberInput id="length" name="length" label="Length with bumpers (in)" required
                   value={formData.length} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.length} error={errors.length} placeholder="e.g. 32" />
               </div>
               <div className="col-md-4">
-                <NumberInput id="width" name="width" label="Width (in)" required
+                <NumberInput id="width" name="width" label="Width with bumpers (in)" required
                   value={formData.width} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.width} error={errors.width} placeholder="e.g. 28" />
               </div>
