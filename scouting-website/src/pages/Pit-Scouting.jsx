@@ -5,28 +5,13 @@ import { saveOffline, sendToServer, handleImageUpload } from "../sync";
 import { useSharedScouter, getPreservedScouter } from "../hooks/useSharedScouter";
 import { useAutosave, getAutosave, clearAutosave } from "../hooks/useAutosave";
 
-function validate(values, imageFile) {
+function validate(values) {
   const errors = {};
-  if (!values.scouter_name?.trim())     errors.scouter_name     = "Required";
-  if (!values.scouter_team?.trim())     errors.scouter_team     = "Required";
+  if (!values.scouter_name?.trim())     errors.scouter_name = "Required";
+  if (!values.scouter_team?.trim())     errors.scouter_team = "Required";
   if (values.scouter_team && !/^\d+$/.test(values.scouter_team.trim())) errors.scouter_team = "Must be a number";
-  if (!values.team_number?.trim())      errors.team_number      = "Required";
+  if (!values.team_number?.trim())      errors.team_number  = "Required";
   if (values.team_number && !/^\d+$/.test(values.team_number.trim())) errors.team_number = "Must be a number";
-  if (!values.length?.trim())           errors.length           = "Required";
-  if (!values.width?.trim())            errors.width            = "Required";
-  if (!values.starting_height?.trim())  errors.starting_height  = "Required";
-  if (!values.weight?.trim())           errors.weight           = "Required";
-  if (!values.batteries?.trim())        errors.batteries        = "Required";
-  if (!values.drive_motors)             errors.drive_motors     = "Required";
-  if (values.drive_motors === "Other" && !values.drive_motors_other?.trim()) errors.drive_motors_other = "Required";
-  if (!values.vision_system)            errors.vision_system    = "Required";
-  if (values.vision_system === "Other" && !values.vision_system_other?.trim()) errors.vision_system_other = "Required";
-  if (!values.hopper_capacity?.trim())  errors.hopper_capacity  = "Required";
-  if (!values.shooter_type)             errors.shooter_type     = "Required";
-  if (values.shooter_type === "Other" && !values.shooter_type_other?.trim()) errors.shooter_type_other = "Required";
-  if (!values.l1_climb_auto)            errors.l1_climb_auto    = "Required";
-  if (!values.l1_climb_endgame)         errors.l1_climb_endgame = "Required";
-  if (!imageFile)                       errors.image            = "A robot photo is required";
   return errors;
 }
 
@@ -59,23 +44,22 @@ function NumberInput({ id, name, label, value, onChange, onBlur, touched, error,
       {label && <label htmlFor={id} className="form-label">{label} {required && <span className="text-danger">*</span>}</label>}
       <input id={id} type="text" name={name} inputMode="decimal"
         value={value} onChange={onChange} onBlur={onBlur} onKeyDown={numericOnly}
-        className={`form-control ${touched ? (error ? "is-invalid" : "is-valid") : ""}`}
+        className={`form-control ${touched ? (error ? "is-invalid" : value?.trim() ? "is-valid" : "") : ""}`}
         placeholder={placeholder} />
       <div className="invalid-feedback">{error}</div>
     </div>
   );
 }
 
-function ImageUploadField({ imageFile, imagePreview, onFileChange, error, inputRef }) {
+function ImageUploadField({ imageFile, imagePreview, onFileChange, inputRef }) {
   return (
     <div className="mb-4">
       <label className="form-label fw-bold fs-5">
-        Upload Robot Picture <span className="text-danger">*</span>
+        Upload Robot Picture
       </label>
       <input ref={inputRef} id="robotImage" type="file" accept="image/*" onChange={onFileChange}
-        className={`form-control form-control-lg ${error ? "is-invalid" : ""}`}
+        className="form-control form-control-lg"
         style={{ padding: "1rem", fontSize: "1.1rem" }} />
-      {error && <div className="invalid-feedback d-block">{error}</div>}
       {imagePreview && (
         <div className="mt-3 text-center">
           <img src={imagePreview} alt="Robot preview" style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "0.5rem", border: "2px solid #dee2e6", objectFit: "contain" }} />
@@ -126,24 +110,23 @@ function getInitialValues() {
     shooter_type:        draft?.shooter_type         ?? "",
     shooter_type_other:  draft?.shooter_type_other   ?? "",
     favorite_food:       draft?.favorite_food        ?? "",
+    serious_comments:    draft?.serious_comments     ?? "",
     funny_comments:      draft?.funny_comments       ?? "",
   };
 }
 
 function PitScouting() {
   const isOnline = useNetworkStatus();
-  const [showSuccess, setShowSuccess]       = useState(false);
+  const [showSuccess, setShowSuccess]               = useState(false);
   const [showValidationAlert, setShowValidationAlert] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [imageFile, setImageFile]           = useState(null);
-  const [imagePreview, setImagePreview]     = useState(null);
-  const [imageError, setImageError]         = useState("");
-  const [showClearModal, setShowClearModal] = useState(false);
+  const [successMessage, setSuccessMessage]         = useState("");
+  const [imageFile, setImageFile]                   = useState(null);
+  const [imagePreview, setImagePreview]             = useState(null);
+  const [showClearModal, setShowClearModal]         = useState(false);
   const fileInputRef = useRef(null);
   const [sharedScouter, updateSharedScouter] = useSharedScouter();
 
   const handleChangeWithSync = (e) => {
-    // Update both useForm state (for validation) and shared localStorage
     handleChange(e);
     if (e.target.name === "scouter_name" || e.target.name === "scouter_team") {
       updateSharedScouter(e.target.name, e.target.value);
@@ -154,18 +137,14 @@ function PitScouting() {
     const file = e.target.files[0];
     if (!file) return;
     setImageFile(file);
-    setImageError("");
     setImagePreview(URL.createObjectURL(file));
   }, []);
 
   const onSubmit = async (values) => {
-    
     const generateId = () => {
       if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
       return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
     };
-
-    if (!imageFile) { setImageError("A robot photo is required"); return; }
 
     const driveMotors  = values.drive_motors  === "Other" ? values.drive_motors_other  || "Other" : values.drive_motors;
     const visionSystem = values.vision_system === "Other" ? values.vision_system_other || "Other" : values.vision_system;
@@ -174,37 +153,58 @@ function PitScouting() {
     const submission = {
       "Scouter's Name":           values.scouter_name     || "",
       "Scouter's Team #":         values.scouter_team     || "",
-      "Scouted Team #":              values.team_number      || "",
-      "Length (w/ bumpers)":              values.length           || "",
-      "Width (w/ bumpers)":               values.width            || "",
-      "Starting Height":     values.starting_height  || "",
-      "Weight":             values.weight           || "",
+      "Scouted Team #":           values.team_number      || "",
+      "Length (w/ bumpers)":      values.length           || "",
+      "Width (w/ bumpers)":       values.width            || "",
+      "Starting Height":          values.starting_height  || "",
+      "Weight":                   values.weight           || "",
       "Drive Motors":             driveMotors,
       "# of Batteries in Pit":   values.batteries        || "",
       "Vision System":            visionSystem,
       "Hopper Max Capacity":      values.hopper_capacity  || "",
-      "Can L1 Climb in Auto?":    values.l1_climb_auto    || "No",
-      "Can L1 Climb in Endgame?": values.l1_climb_endgame || "No",
+      "Can L1 Climb in Auto?":    values.l1_climb_auto    || "",
+      "Can L1 Climb in Endgame?": values.l1_climb_endgame || "",
       "Shooter Type":             shooterType,
       "Robot's Favorite Food":    values.favorite_food    || "",
+      "Serious Comments":         values.serious_comments || "",
       "Funny Comments":           values.funny_comments   || "",
-      submissionId: generateId(), // Circumvents AWS error
+      submissionId: generateId(),
       sheet_name: "Pit Scouting",
     };
 
-    if (isOnline) {
-      await sendToServer(submission);
-      setSuccessMessage("Pit scouting data sent to server.");
-    } else {
-      await saveOffline(submission);
-      setSuccessMessage("Pit scouting data saved locally and will sync when online.");
+    // Only send to spreadsheet if any optional fields have data
+    const hasOptionalData =
+      values.length?.trim()            ||
+      values.width?.trim()             ||
+      values.starting_height?.trim()   ||
+      values.weight?.trim()            ||
+      values.batteries?.trim()         ||
+      values.drive_motors              ||
+      values.vision_system             ||
+      values.hopper_capacity?.trim()   ||
+      values.shooter_type              ||
+      values.l1_climb_auto             ||
+      values.l1_climb_endgame          ||
+      values.favorite_food?.trim()     ||
+      values.serious_comments?.trim()  ||
+      values.funny_comments?.trim();
+
+    if (hasOptionalData) {
+      if (isOnline) {
+        await sendToServer(submission);
+      } else {
+        await saveOffline(submission);
+      }
     }
 
-    try {
-      const base64 = await compressImage(imageFile);
-      await handleImageUpload(values.team_number, base64);
-    } catch (err) {
-      console.error("[PitScouting] Image processing failed:", err);
+    // Upload image only if one was provided
+    if (imageFile) {
+      try {
+        const base64 = await compressImage(imageFile);
+        await handleImageUpload(values.team_number, base64);
+      } catch (err) {
+        console.error("[PitScouting] Image processing failed:", err);
+      }
     }
 
     // Save scouter info to shared key
@@ -215,21 +215,23 @@ function PitScouting() {
       scouter_team: values.scouter_team || "",
     }));
 
-    // Reset form but keep name/team autofill
     resetForm();
     clearAutosave("Pit Scouting");
     setImageFile(null);
     setImagePreview(null);
-    setImageError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
 
-    setSuccessMessage(isOnline ? "Pit scouting data submitted successfully!" : "Saved offline. Will sync when back online.");
+    setSuccessMessage(
+      hasOptionalData || imageFile
+        ? (isOnline ? "Pit scouting data submitted successfully!" : "Saved offline. Will sync when back online.")
+        : "Submission recorded with required fields only."
+    );
     setShowSuccess(true);
     setShowValidationAlert(false);
     setTimeout(() => setShowSuccess(false), 5000);
   };
 
-  const validateWithImage = useCallback((values) => validate(values, imageFile), [imageFile]);
+  const validateWithImage = useCallback((values) => validate(values), []);
 
   const { formData, errors, touched, isSubmitting, handleChange, handleBlur, handleSubmit, resetForm } = useForm({
     initialValues: getInitialValues(),
@@ -237,11 +239,8 @@ function PitScouting() {
     onSubmit,
   });
 
-  // Sync scouter name/team to shared localStorage on every keystroke
   useSharedScouter(formData.scouter_name, formData.scouter_team);
 
-  // When stand scouting updates the shared key while pit scouting is open,
-  // listen for storage events and update the fields live
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key !== "standScoutingPreserved") return;
@@ -259,21 +258,16 @@ function PitScouting() {
     return () => window.removeEventListener("storage", onStorage);
   }, [formData.scouter_name, formData.scouter_team, handleChange]);
 
-
   useAutosave(formData, "Pit Scouting");
-
-
 
   const handleClear = () => {
     resetForm();
     setImageFile(null);
     setImagePreview(null);
-    setImageError("");
     if (fileInputRef.current) fileInputRef.current.value = "";
     setShowClearModal(false);
   };
 
- 
   const validationAlertRef = useRef(null);
   const successAlertRef    = useRef(null);
 
@@ -289,13 +283,11 @@ function PitScouting() {
     }
   }, [showSuccess]);
 
-
   const onFormSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate(formData, imageFile);
+    const validationErrors = validate(formData);
     if (Object.keys(validationErrors).length > 0) {
       setShowValidationAlert(true);
-      // Also trigger useForm's own validation to show field-level errors
       await handleSubmit(e);
       return;
     }
@@ -303,15 +295,10 @@ function PitScouting() {
     await handleSubmit(e);
   };
 
-  const numericOnly = (e) => {
-    if (!/[\d.]/.test(e.key) && !["Backspace", "Tab", "Delete", "ArrowLeft", "ArrowRight"].includes(e.key)) e.preventDefault();
-  };
-
   return (
     <div className="container mt-4">
       <h1 className="mb-4 text-center">Pit Scouting</h1>
 
-      {/* Offline alert — scoped to form width, only when offline */}
       {!isOnline && (
         <div className="row justify-content-center mb-3">
           <div className="col-lg-8">
@@ -335,7 +322,7 @@ function PitScouting() {
                 <label htmlFor="scouter_name" className="form-label">Your Name <span className="text-danger">*</span></label>
                 <input id="scouter_name" type="text" name="scouter_name"
                   value={sharedScouter.scouter_name} onChange={handleChangeWithSync} onBlur={handleBlur}
-                  className={`form-control ${touched.scouter_name ? (errors.scouter_name ? "is-invalid" : "is-valid") : ""}`}
+                  className={`form-control ${touched.scouter_name ? (errors.scouter_name ? "is-invalid" : sharedScouter.scouter_name?.trim() ? "is-valid" : "") : ""}`}
                   placeholder="Enter your name" />
                 <div className="invalid-feedback">{errors.scouter_name}</div>
               </div>
@@ -354,17 +341,17 @@ function PitScouting() {
             {/* ── Robot Dimensions ── */}
             <div className="row">
               <div className="col-md-4">
-                <NumberInput id="length" name="length" label="Length with bumpers (in)" required
+                <NumberInput id="length" name="length" label="Length with bumpers (in)"
                   value={formData.length} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.length} error={errors.length} placeholder="e.g. 32" />
               </div>
               <div className="col-md-4">
-                <NumberInput id="width" name="width" label="Width with bumpers (in)" required
+                <NumberInput id="width" name="width" label="Width with bumpers (in)"
                   value={formData.width} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.width} error={errors.width} placeholder="e.g. 28" />
               </div>
               <div className="col-md-4">
-                <NumberInput id="starting_height" name="starting_height" label="Starting Height (in)" required
+                <NumberInput id="starting_height" name="starting_height" label="Starting Height (in)"
                   value={formData.starting_height} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.starting_height} error={errors.starting_height} placeholder="e.g. 30" />
               </div>
@@ -373,19 +360,19 @@ function PitScouting() {
             {/* ── Weight & Batteries ── */}
             <div className="row">
               <div className="col-md-6">
-                <NumberInput id="weight" name="weight" label="Weight (lbs)" required
+                <NumberInput id="weight" name="weight" label="Weight (lbs)"
                   value={formData.weight} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.weight} error={errors.weight} placeholder="e.g. 115" />
               </div>
               <div className="col-md-6">
-                <NumberInput id="batteries" name="batteries" label="# of Batteries in Pit" required
+                <NumberInput id="batteries" name="batteries" label="# of Batteries in Pit"
                   value={formData.batteries} onChange={handleChange} onBlur={handleBlur}
                   touched={touched.batteries} error={errors.batteries} placeholder="e.g. 2" />
               </div>
             </div>
 
             {/* ── Drive Motors ── */}
-            <ButtonGroupField label="Drive Motors" name="drive_motors" required
+            <ButtonGroupField label="Drive Motors" name="drive_motors"
               options={["Kraken", "Neo", "Vortex", "CIM", "Other"]}
               value={formData.drive_motors} onChange={handleChange}
               error={errors.drive_motors} touched={touched.drive_motors} />
@@ -393,14 +380,14 @@ function PitScouting() {
               <div className="mb-3">
                 <input type="text" name="drive_motors_other" value={formData.drive_motors_other}
                   onChange={handleChange} onBlur={handleBlur}
-                  className={`form-control ${touched.drive_motors_other ? (errors.drive_motors_other ? "is-invalid" : "is-valid") : ""}`}
+                  className={`form-control ${touched.drive_motors_other ? (errors.drive_motors_other ? "is-invalid" : formData.drive_motors_other?.trim() ? "is-valid" : "") : ""}`}
                   placeholder="Specify drive motor..." />
                 <div className="invalid-feedback">{errors.drive_motors_other}</div>
               </div>
             )}
 
             {/* ── Vision System ── */}
-            <ButtonGroupField label="Vision System" name="vision_system" required
+            <ButtonGroupField label="Vision System" name="vision_system"
               options={["PhotonVision", "Limelight", "None", "Other"]}
               value={formData.vision_system} onChange={handleChange}
               error={errors.vision_system} touched={touched.vision_system} />
@@ -408,19 +395,19 @@ function PitScouting() {
               <div className="mb-3">
                 <input type="text" name="vision_system_other" value={formData.vision_system_other}
                   onChange={handleChange} onBlur={handleBlur}
-                  className={`form-control ${touched.vision_system_other ? (errors.vision_system_other ? "is-invalid" : "is-valid") : ""}`}
+                  className={`form-control ${touched.vision_system_other ? (errors.vision_system_other ? "is-invalid" : formData.vision_system_other?.trim() ? "is-valid" : "") : ""}`}
                   placeholder="Specify vision system..." />
                 <div className="invalid-feedback">{errors.vision_system_other}</div>
               </div>
             )}
 
             {/* ── Hopper Capacity ── */}
-            <NumberInput id="hopper_capacity" name="hopper_capacity" label="Hopper Max Capacity" required
+            <NumberInput id="hopper_capacity" name="hopper_capacity" label="Hopper Max Capacity"
               value={formData.hopper_capacity} onChange={handleChange} onBlur={handleBlur}
               touched={touched.hopper_capacity} error={errors.hopper_capacity} placeholder="e.g. 5" />
 
             {/* ── Shooter Type ── */}
-            <ButtonGroupField label="Shooter Type" name="shooter_type" required
+            <ButtonGroupField label="Shooter Type" name="shooter_type"
               options={["Single Shooter", "Double Shooter", "Triple Shooter", "Turret", "Drum", "Other"]}
               value={formData.shooter_type} onChange={handleChange}
               error={errors.shooter_type} touched={touched.shooter_type} />
@@ -428,7 +415,7 @@ function PitScouting() {
               <div className="mb-3">
                 <input type="text" name="shooter_type_other" value={formData.shooter_type_other}
                   onChange={handleChange} onBlur={handleBlur}
-                  className={`form-control ${touched.shooter_type_other ? (errors.shooter_type_other ? "is-invalid" : "is-valid") : ""}`}
+                  className={`form-control ${touched.shooter_type_other ? (errors.shooter_type_other ? "is-invalid" : formData.shooter_type_other?.trim() ? "is-valid" : "") : ""}`}
                   placeholder="Specify shooter type..." />
                 <div className="invalid-feedback">{errors.shooter_type_other}</div>
               </div>
@@ -437,12 +424,12 @@ function PitScouting() {
             {/* ── Climb Capabilities ── */}
             <div className="row">
               <div className="col-md-6">
-                <ButtonGroupField label="Can L1 Climb in Auto?" name="l1_climb_auto" required
+                <ButtonGroupField label="Can L1 Climb in Auto?" name="l1_climb_auto"
                   options={["Yes", "No"]} value={formData.l1_climb_auto} onChange={handleChange}
                   error={errors.l1_climb_auto} touched={touched.l1_climb_auto} />
               </div>
               <div className="col-md-6">
-                <ButtonGroupField label="Can L1 Climb in Endgame?" name="l1_climb_endgame" required
+                <ButtonGroupField label="Can L1 Climb in Endgame?" name="l1_climb_endgame"
                   options={["Yes", "No"]} value={formData.l1_climb_endgame} onChange={handleChange}
                   error={errors.l1_climb_endgame} touched={touched.l1_climb_endgame} />
               </div>
@@ -456,6 +443,13 @@ function PitScouting() {
                 className="form-control" placeholder="e.g. Lithium grease sandwiches" />
             </div>
 
+            {/* ── Serious Comments ── */}
+            <div className="mb-3">
+              <label htmlFor="serious_comments" className="form-label">Serious Comments</label>
+              <textarea id="serious_comments" name="serious_comments" value={formData.serious_comments}
+                onChange={handleChange} onBlur={handleBlur} className="form-control" rows={3} />
+            </div>
+
             {/* ── Funny Comments ── */}
             <div className="mb-3">
               <label htmlFor="funny_comments" className="form-label">Funny Comments</label>
@@ -465,7 +459,7 @@ function PitScouting() {
 
             {/* ── Robot Image ── */}
             <ImageUploadField imageFile={imageFile} imagePreview={imagePreview}
-              onFileChange={handleFileChange} error={imageError} inputRef={fileInputRef} />
+              onFileChange={handleFileChange} inputRef={fileInputRef} />
 
             {/* ── Actions ── */}
             <div className="row g-2 mb-3">
@@ -479,7 +473,7 @@ function PitScouting() {
               </div>
             </div>
 
-            {/* Validation alert — bottom of form */}
+            {/* Validation alert */}
             {showValidationAlert && (
               <div ref={validationAlertRef} className="alert alert-danger d-flex align-items-center mt-2" role="alert">
                 <svg className="bi flex-shrink-0 me-2" width="20" height="20" role="img" aria-label="Danger:">
@@ -489,7 +483,7 @@ function PitScouting() {
               </div>
             )}
 
-            {/* Success alert — bottom of form */}
+            {/* Success alert */}
             {showSuccess && (
               <div ref={successAlertRef} className="alert alert-success d-flex align-items-center alert-dismissible mt-2" role="alert">
                 <svg className="bi flex-shrink-0 me-2" width="20" height="20" role="img" aria-label="Success:">
