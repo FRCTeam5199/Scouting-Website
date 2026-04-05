@@ -25,12 +25,12 @@ export const SidebarData = [
     icon: <FaIcons.FaWrench />,
     cName: 'nav-text'
   },
-  // {
-  //   title: 'Statistics',
-  //   path: '/statistics',
-  //   icon: <ImIcons.ImStatsBars />,
-  //   cName: 'nav-text'
-  // },
+  {
+    title: 'Analytics',
+    path: '/analytics',
+    icon: <ImIcons.ImStatsBars />,
+    cName: 'nav-text'
+  },
   // {
   //   title: 'Rankings',
   //   path: '/rankings',

@@ -8,7 +8,7 @@ import useNetworkStatus from "./hooks/useNetworkStatus";
 
 import Home from "./pages/Home"
 import Settings from "./pages/Settings"
-import Statistics from "./pages/Statistics"
+import Analytics from "./pages/Analytics"
 import Rankings from "./pages/Rankings"
 import Data_Sheet from "./pages/Data_Sheet"
 import PitScouting from "./pages/Pit-Scouting"
@@ -75,7 +75,7 @@ function App() {
         <Route path="/pit-scouting" element={<PitScouting />} />
         <Route path="/stand-scouting" element={<StandScouting />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/statistics" element={<Statistics />} />
+        <Route path="/analytics" element={<Analytics />} />
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/data-sheet" element={<Data_Sheet />} />
       </Routes>
