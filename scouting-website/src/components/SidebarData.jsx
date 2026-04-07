@@ -37,12 +37,6 @@ export const SidebarData = [
   //   icon: <PiIcons.PiRankingBold />,
   //   cName: 'nav-text'
   // },
-  {
-    title: 'Data Sheet',
-    path: '/data-sheet',
-    icon: <IoIcons.IoIosPaper />,
-    cName: 'nav-text'
-  },
   // {
   //   title: 'Settings',
   //   path: '/settings',

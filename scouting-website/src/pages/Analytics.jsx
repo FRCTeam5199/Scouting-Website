@@ -3,8 +3,9 @@ import { useScoutingData } from "../hooks/useScoutingData";
 import Statsheet   from "./Statsheet";
 import Graphs      from "./Graphs";
 import HeadToHead  from "./Head-to-Head";
+import Data_Sheet    from "./Data_Sheet";
 
-const TABS = ["Statsheet", "Graphs", "Head to Head"];
+const TABS = ["Statsheet", "Graphs", "Head to Head", "Data Sheet"];
 
 export default function Analytics() {
   const [activeTab, setActiveTab] = useState("Statsheet");
@@ -30,11 +31,7 @@ export default function Analytics() {
             <div className="small mt-1">{error}</div>
             <hr />
             <div className="small">
-              Make sure you have set <code>VITE_STAND_CSV_URL</code> and{" "}
-              <code>VITE_PIT_CSV_URL</code> in your <code>.env</code> file.
-              <br />
-              To get the URLs: open your Google Sheet → File → Share →
-              Publish to web → select the sheet tab → CSV → copy the URL.
+              Make sure you are connected to Wi-Fi!
             </div>
           </div>
         </div>
@@ -81,6 +78,7 @@ export default function Analytics() {
       {activeTab === "Statsheet"    && <Statsheet  teamStats={teamStats} pitByTeam={pitByTeam} />}
       {activeTab === "Graphs"       && <Graphs     teamStats={teamStats} />}
       {activeTab === "Head to Head" && <HeadToHead teamStats={teamStats} pitByTeam={pitByTeam} />}
+      {activeTab === "Data Sheet"   && <Data_Sheet teamStats={teamStats} pitByTeam={pitByTeam} />}
     </div>
   );
 }
