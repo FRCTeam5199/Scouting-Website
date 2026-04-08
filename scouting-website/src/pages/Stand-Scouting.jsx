@@ -567,6 +567,7 @@ function CommentsTab({ formData, handleChange, handleBlur, isSubmitting, onClear
     { name: "long_lineup_time", label: "Long line-up time to shoot Fuel" },
     { name: "fuel_jammed", label: "Fuel got stuck/jammed inside robot" },
     { name: "robot_beached", label: "Robot got beached by Bump/Fuel/Depot" },
+    { name: "robot_browned_out", label: "Robot browned out" },
   ];
 
   return (
@@ -725,6 +726,7 @@ export default function StandScouting() {
       long_lineup_time: false,
       fuel_jammed: false,
       robot_beached: false,
+      robot_browned_out: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",
@@ -796,6 +798,7 @@ export default function StandScouting() {
       "Long line-up time to shoot Fuel": values.long_lineup_time ? "Yes" : "No",
       "Fuel got stuck/jammed inside robot": values.fuel_jammed ? "Yes" : "No",
       "Robot got beached": values.robot_beached ? "Yes" : "No",
+      "Robot browned out": values.robot_browned_out ? "Yes" : "No",
       "Serious Comments": values.serious_comments || "",
       "Funny Comments": values.funny_comments || "",
       "Rescout Request": values.rescout_request === "Yes" ? "Yes" : "No",
@@ -977,6 +980,7 @@ export default function StandScouting() {
       long_lineup_time: false,
       fuel_jammed: false,
       robot_beached: false,
+      robot_browned_out: false,
       serious_comments: "",
       funny_comments: "",
       rescout_request: "No",

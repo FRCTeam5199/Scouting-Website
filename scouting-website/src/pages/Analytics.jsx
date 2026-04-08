@@ -44,9 +44,7 @@ export default function Analytics() {
     return (
       <div className="container mt-4">
         <div className="alert alert-warning" role="alert">
-          No stand scouting data found. Check that{" "}
-          <code>VITE_STAND_CSV_URL</code> points to your published sheet CSV
-          and that the sheet contains data rows.
+          No stand scouting data found.
         </div>
       </div>
     );
