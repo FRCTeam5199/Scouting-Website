@@ -7,7 +7,7 @@ import Data_Sheet    from "./Data_Sheet";
 
 const CORRECT_PASSWORD = import.meta.env.VITE_ANALYTICS_PASSWORD || "";
 
-const TABS = ["Statsheet", "Graphs", "Head to Head"];
+const TABS = ["Statsheet", "Graphs", "Head to Head", "Data Sheet"];
 
 // ─── PASSWORD GATE ────────────────────────────────────────────────────────────
 function PasswordGate({ onSuccess }) {
