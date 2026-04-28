@@ -398,7 +398,7 @@ export default function Statsheet({ teamStats, pitByTeam }) {
                   { label: "Avg Auto Fuel",     value: s.avgAutoFuel.toFixed(1),        variant: "success" },
                   { label: "Max Auto Fuel",     value: Math.round(s.maxAutoFuel),       variant: "success" },
                   { label: "Avg Shuttles",      value: s.avgShuttles.toFixed(1),        variant: "warning" },
-                  { label: "Climb",             value: pit["Can L1 Climb in Endgame?"], variant: s.climbYesNo === "Yes" ? "success" : "secondary" },
+                  { label: "Climb",             value: s.climbYesNo,                    variant: s.climbYesNo === "Yes" ? "success" : "secondary" },
                   { label: "Has Auton",         value: `${s.hasAuton}/${s.matchCount}`, variant: "primary" },
                   { label: "Avg Auto Acc.",     value: `${s.avgAutoAcc.toFixed(0)}%`,   variant: "info" },
                   { label: "Avg Tele Acc.",     value: `${s.avgTeleAcc.toFixed(0)}%`,   variant: "info" },
