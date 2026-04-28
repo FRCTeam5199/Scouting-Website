@@ -158,7 +158,10 @@ function MatchDetail({ row }) {
               ["Turret?",        row["Has Turret?"]],
               ["Shoots Moving?", row["Can score while moving?"]],
               ["Bulldozing?",    row["Bulldozing?"]],
-              ["Climb", <span><strong>L1 EG:</strong> {pit["Can L1 Climb in Endgame?"]}</span>
+              ["Climb",
+                <span className={`badge ${CLIMB_BADGE[climbVal] ?? "bg-secondary"}`}>
+                  {CLIMB_LABEL[climbVal] || climbVal || "None"}
+                </span>
               ],
               ["Climb Side",     row["Climbed Side"]],
               ["Climb Center",   row["Climbed Center"]],

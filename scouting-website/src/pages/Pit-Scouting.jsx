@@ -104,7 +104,9 @@ function getInitialValues() {
     batteries:           draft?.batteries            ?? "",
     vision_system:       draft?.vision_system        ?? "",
     vision_system_other: draft?.vision_system_other  ?? "",
+    bellypan:           draft?.bellypan            ?? "",
     hopper_capacity:     draft?.hopper_capacity      ?? "",
+    driver_experience:   draft?.driver_experience    ?? "",
     l1_climb_auto:       draft?.l1_climb_auto        ?? "",
     l1_climb_endgame:    draft?.l1_climb_endgame     ?? "",
     shooter_type:        draft?.shooter_type         ?? "",
@@ -161,7 +163,9 @@ function PitScouting() {
       "Drive Motors":             driveMotors,
       "# of Batteries in Pit":   values.batteries        || "",
       "Vision System":            visionSystem,
+      "Has a Bellypan?":          values.bellypan         || "",
       "Hopper Max Capacity":      values.hopper_capacity  || "",
+      "Driver Experience":          values.driver_experience || "",
       "Can L1 Climb in Auto?":    values.l1_climb_auto    || "",
       "Can L1 Climb in Endgame?": values.l1_climb_endgame || "",
       "Shooter Type":             shooterType,
@@ -181,7 +185,9 @@ function PitScouting() {
       values.batteries?.trim()         ||
       values.drive_motors              ||
       values.vision_system             ||
+      values.bellypan                  ||
       values.hopper_capacity?.trim()   ||
+      values.driver_experience?.trim() ||
       values.shooter_type              ||
       values.l1_climb_auto             ||
       values.l1_climb_endgame          ||
@@ -401,10 +407,27 @@ function PitScouting() {
               </div>
             )}
 
+            {/* ── Bellypan ── */}
+            <div className="row">
+              <div className="col-md-6">
+                <ButtonGroupField label="Robot has a bellypan? (a plate protecting the bottom of the robot)" name="bellypan"
+                  options={["Yes", "No"]} value={formData.bellypan} onChange={handleChange}
+                  error={errors.bellypan} touched={touched.bellypan} />
+              </div>
+            </div>
+
             {/* ── Hopper Capacity ── */}
             <NumberInput id="hopper_capacity" name="hopper_capacity" label="Hopper Max Capacity"
               value={formData.hopper_capacity} onChange={handleChange} onBlur={handleBlur}
               touched={touched.hopper_capacity} error={errors.hopper_capacity} placeholder="e.g. 5" />
+
+            {/* ── Driver Experience ── */}
+            <div className="mb-4">
+              <label htmlFor="driver_experience" className="form-label">How much experience does your driver/drive team have? </label>
+              <input id="driver_experience" type="text" name="driver_experience"
+                value={formData.driver_experience} onChange={handleChange} onBlur={handleBlur}
+                className="form-control" placeholder="e.g. 2 years of FRC experience" />
+            </div>
 
             {/* ── Shooter Type ── */}
             <ButtonGroupField label="Shooter Type" name="shooter_type"
